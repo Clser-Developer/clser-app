@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1f2937">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Fã Clube">
+    <meta name="description" content="Plataforma de assinatura para acesso exclusivo a conteúdo de artistas favoritos">
+    <meta name="keywords" content="fã clube, artistas, música, assinatura, exclusivo">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <title>Fã Clube Exclusivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+      html {
+        height: 100%;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        min-height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+      
+      #root {
+        width: 100%;
+        max-width: 450px;
+        aspect-ratio: 1179 / 2556;
+        max-height: 95vh;
+        background-color: #111827; /* Original app bg (gray-900) */
+        border-radius: 2.5rem;
+        border: 8px solid black;
+        box-shadow: 0 0 80px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow-y: auto;
+        overflow-x: hidden;
+        /* Hide scrollbar for IE, Edge and Firefox */
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* Hide scrollbar for Chrome, Safari and Opera */
+      #root::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Global Animations */
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes scale-in { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+      @keyframes scale-in-bounce {
+        0% { transform: scale(0.5); opacity: 0; }
+        60% { transform: scale(1.05); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+      @keyframes draw-check { from { stroke-dashoffset: 32; } to { stroke-dashoffset: 0; } }
+      @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+      /* Animation Utility Classes */
+      .animate-fade-in { animation: fadeIn 0.3s ease-in-out forwards; }
+      .animate-scale-in { animation: scale-in 0.4s 0.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+      .animate-scale-in-bounce { animation: scale-in-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+      .animate-draw-check {
+        stroke-dasharray: 32;
+        stroke-dashoffset: 32;
+        animation: draw-check 0.3s 0.4s ease-out forwards;
+      }
+      .animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/": "https://esm.sh/react-dom@18.2.0/",
+    "react/": "https://esm.sh/react@18.2.0/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-zinc-900">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
