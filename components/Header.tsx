@@ -2,6 +2,7 @@
 import React from 'react';
 import { Artist } from '../types';
 import Icon from './Icon';
+import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
   artist: Artist;
@@ -27,20 +28,22 @@ const Header: React.FC<HeaderProps> = ({ artist, onSwitchArtist, onViewImage, on
         </div>
       </div>
       <div className="flex items-center space-x-1">
-        <button 
+        <Button
           onClick={onOpenHelp}
-          className="p-2 rounded-full text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+          variant="ghost"
+          className="p-2 rounded-full text-gray-300 hover:bg-gray-700 hover:text-white"
           aria-label="Central de Ajuda"
         >
           <Icon name="question-mark-circle" className="w-6 h-6" />
-        </button>
-        <button 
+        </Button>
+        <Button
           onClick={onSwitchArtist}
-          className="p-2 rounded-full text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+          variant="ghost"
+          className="p-2 rounded-full text-gray-300 hover:bg-gray-700 hover:text-white"
           aria-label="Trocar de artista"
         >
           <Icon name="switch" className="w-6 h-6" />
-        </button>
+        </Button>
       </div>
     </header>
   );

@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Post, Artist, Comment } from '../types';
 import Icon from './Icon';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const CommentItem: React.FC<{ comment: Comment }> = ({ comment }) => (
     <div className="flex items-start space-x-3 py-4">
@@ -76,13 +78,14 @@ const CommentModal: React.FC<CommentModalProps> = ({ post, artist, comments, isL
                 onClick={(e) => e.stopPropagation()}
             >
                 <header className="flex items-center justify-center p-4 h-16 bg-gray-800 border-b border-gray-700 flex-shrink-0">
-                    <button 
-                        onClick={onClose} 
-                        className="absolute left-4 p-2 rounded-full text-gray-300 hover:bg-gray-700 transition-colors"
+                    <Button
+                        onClick={onClose}
+                        variant="ghost"
+                        className="absolute left-4 p-2 rounded-full text-gray-300 hover:bg-gray-700"
                         aria-label="Voltar"
                     >
                         <Icon name="arrowLeft" className="w-6 h-6" />
-                    </button>
+                    </Button>
                     <h2 className="text-lg font-bold text-white">Comentários</h2>
                 </header>
 
@@ -113,21 +116,21 @@ const CommentModal: React.FC<CommentModalProps> = ({ post, artist, comments, isL
                 <footer className="p-4 border-t border-gray-700 bg-gray-800 flex-shrink-0">
                     <form onSubmit={handleSubmit} className="flex items-center space-x-3">
                         <img src="https://picsum.photos/seed/user-profile/100/100" alt="Sua foto de perfil" className="w-10 h-10 rounded-full object-cover" />
-                        <input
+                        <Input
                             type="text"
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}
                             placeholder="Adicione um comentário..."
-                            className="flex-1 bg-gray-700 border-gray-600 rounded-full py-2.5 px-4 text-white focus:ring-2 focus:ring-magenta-500 focus:border-transparent outline-none"
+                            className="flex-1 bg-gray-700 border-gray-600 rounded-full text-white focus:ring-magenta-500"
                         />
-                        <button
+                        <Button
                             type="submit"
                             disabled={!commentText.trim()}
-                            className="bg-orange-500 text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 hover:bg-orange-600 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
+                            className="bg-orange-500 hover:bg-orange-600 rounded-full w-10 h-10 p-0 disabled:bg-gray-600"
                             aria-label="Enviar comentário"
                         >
                             <Icon name="send" className="w-5 h-5" />
-                        </button>
+                        </Button>
                     </form>
                 </footer>
             </div>

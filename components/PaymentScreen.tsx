@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Artist, Plan } from '../types';
 import Icon from './Icon';
+import { Button } from '@/components/ui/button';
 
 interface PaymentScreenProps {
   artist: Artist;
@@ -18,18 +19,18 @@ const LoadingSpinner: React.FC = () => (
 const WalletOptions: React.FC = () => (
     <div className="space-y-3">
         <p className="text-sm text-gray-400 text-center mb-4">Selecione sua carteira digital para continuar.</p>
-        <button className="w-full text-center p-3 bg-black text-white font-semibold rounded-lg border border-gray-600 hover:border-white transition-colors">
+        <Button className="w-full text-center p-3 bg-black text-white font-semibold rounded-lg border border-gray-600 hover:border-white">
              Apple Pay
-        </button>
-        <button className="w-full text-center p-3 bg-white text-gray-700 font-semibold rounded-lg border border-gray-400 hover:border-black transition-colors">
+        </Button>
+        <Button className="w-full text-center p-3 bg-white text-gray-700 font-semibold rounded-lg border border-gray-400 hover:border-black">
             <span className="font-bold">G</span> Pay
-        </button>
-        <button className="w-full text-center p-3 bg-gray-700 text-white font-semibold rounded-lg border border-gray-600 hover:border-white transition-colors">
+        </Button>
+        <Button className="w-full text-center p-3 bg-gray-700 text-white font-semibold rounded-lg border border-gray-600 hover:border-white">
             Samsung Wallet
-        </button>
-        <button className="w-full text-center p-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors">
+        </Button>
+        <Button className="w-full text-center p-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">
             PayPal
-        </button>
+        </Button>
     </div>
 );
 

@@ -2,6 +2,8 @@
 import React from 'react';
 import { Post, PostType, Section, StoreSection, FanAreaSection } from '../types';
 import Icon from './Icon';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 
 interface PostCardProps {
   post: Post;
@@ -31,13 +33,14 @@ const PostHeader: React.FC<{ artistName: string; artistProfileImageUrl: string; 
 const PollOptions: React.FC<{ options: string[], onVote: (index: number) => void }> = ({ options, onVote }) => (
     <div className="space-y-2">
         {options.map((option, index) => (
-            <button
+            <Button
                 key={index}
                 onClick={() => onVote(index)}
-                className="w-full text-left p-3 bg-gray-700/50 rounded-lg border border-gray-600 hover:border-magenta-500 transition-all group"
+                variant="secondary"
+                className="w-full text-left justify-start hover:border-magenta-500 group"
             >
-                <span className="text-white font-medium group-hover:text-magenta-300">{option}</span>
-            </button>
+                <span className="font-medium group-hover:text-magenta-300">{option}</span>
+            </Button>
         ))}
     </div>
 );
@@ -137,31 +140,36 @@ const PostContent: React.FC<{ post: Post, onVote: (optionIndex: number) => void,
 
 const PostFooter: React.FC<{ post: Post, isLiked: boolean, onLike: (postId: string) => void, onComment: (postId: string) => void }> = ({ post, isLiked, onLike, onComment }) => (
     <div className="flex items-center text-gray-400 p-4 space-x-6">
-        <button 
-            onClick={() => onLike(post.id)} 
-            className={`flex items-center space-x-2 transition-colors duration-200 ${isLiked ? 'text-magenta-500' : 'hover:text-magenta-500'}`}
+        <Button
+            onClick={() => onLike(post.id)}
+            variant="ghost"
+            className={`flex items-center space-x-2 transition-colors duration-200 ${isLiked ? 'text-magenta-500 hover:text-magenta-400' : 'hover:text-magenta-500'}`}
             aria-pressed={isLiked}
         >
             <Icon name="like" className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
             <span className="text-sm font-medium">{post.likes.toLocaleString('pt-BR')}</span>
-        </button>
-        <button onClick={() => onComment(post.id)} className="flex items-center space-x-2 hover:text-orange-400 transition-colors">
+        </Button>
+        <Button onClick={() => onComment(post.id)} variant="ghost" className="flex items-center space-x-2 hover:text-orange-400">
             <Icon name="comment" className="w-5 h-5" />
             <span className="text-sm font-medium">{post.comments.toLocaleString('pt-BR')}</span>
-        </button>
+        </Button>
     </div>
 );
 
 
 const PostCard: React.FC<PostCardProps> = ({ post, artistName, artistProfileImageUrl, isLiked, onLike, onComment, onVote, onViewProfileImage, onNavigate, onViewPostMedia }) => {
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700/50">
-      <PostHeader artistName={artistName} artistProfileImageUrl={artistProfileImageUrl} timestamp={post.timestamp} onViewProfileImage={onViewProfileImage} />
-      <PostContent post={post} onVote={(optionIndex) => onVote(post.id, optionIndex)} onNavigate={onNavigate} onViewPostMedia={onViewPostMedia} />
-      <div className="border-t border-gray-700/50">
+    <Card className="bg-gray-800 border-gray-700/50">
+      <CardHeader className="p-0">
+        <PostHeader artistName={artistName} artistProfileImageUrl={artistProfileImageUrl} timestamp={post.timestamp} onViewProfileImage={onViewProfileImage} />
+      </CardHeader>
+      <CardContent className="p-0">
+        <PostContent post={post} onVote={(optionIndex) => onVote(post.id, optionIndex)} onNavigate={onNavigate} onViewPostMedia={onViewPostMedia} />
+      </CardContent>
+      <CardFooter className="p-0 border-t border-gray-700/50">
         <PostFooter post={post} isLiked={isLiked} onLike={onLike} onComment={onComment} />
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 };
 

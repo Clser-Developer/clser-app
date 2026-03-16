@@ -2,6 +2,7 @@
 import React from 'react';
 import { Section } from '../types';
 import Icon from './Icon';
+import { Button } from '@/components/ui/button';
 
 interface BottomNavProps {
   activeSection: Section;
@@ -14,13 +15,11 @@ const NavItem: React.FC<{
   isActive: boolean;
   onClick: () => void;
 }> = ({ label, iconName, isActive, onClick }) => {
-  const activeClasses = 'text-magenta-400';
-  const inactiveClasses = 'text-gray-400 hover:text-white';
   return (
-    <button onClick={onClick} className={`flex flex-col items-center justify-center w-1/5 pt-2 pb-1 transition-colors ${isActive ? activeClasses : inactiveClasses}`}>
+    <Button onClick={onClick} variant="ghost" className={`flex flex-col items-center justify-center w-1/5 pt-2 pb-1 h-auto ${isActive ? 'text-magenta-400' : 'text-gray-400 hover:text-white'}`}>
       <Icon name={iconName} className="w-6 h-6 mb-1" />
       <span className="text-[10px] font-bold tracking-tighter leading-tight">{label}</span>
-    </button>
+    </Button>
   );
 };
 
