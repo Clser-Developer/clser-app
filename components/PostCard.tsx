@@ -37,9 +37,9 @@ const PollOptions: React.FC<{ options: string[], onVote: (index: number) => void
                 key={index}
                 onClick={() => onVote(index)}
                 variant="secondary"
-                className="w-full text-left justify-start hover:border-magenta-500 group"
+                className="w-full justify-start hover:border-magenta-500"
             >
-                <span className="font-medium group-hover:text-magenta-300">{option}</span>
+                {option}
             </Button>
         ))}
     </div>
@@ -143,13 +143,13 @@ const PostFooter: React.FC<{ post: Post, isLiked: boolean, onLike: (postId: stri
         <Button
             onClick={() => onLike(post.id)}
             variant="ghost"
-            className={`flex items-center space-x-2 transition-colors duration-200 ${isLiked ? 'text-magenta-500 hover:text-magenta-400' : 'hover:text-magenta-500'}`}
+            className={`flex items-center gap-2 ${isLiked ? 'text-magenta-500' : ''}`}
             aria-pressed={isLiked}
         >
             <Icon name="like" className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
             <span className="text-sm font-medium">{post.likes.toLocaleString('pt-BR')}</span>
         </Button>
-        <Button onClick={() => onComment(post.id)} variant="ghost" className="flex items-center space-x-2 hover:text-orange-400">
+        <Button onClick={() => onComment(post.id)} variant="ghost" className="flex items-center gap-2 hover:text-orange-400">
             <Icon name="comment" className="w-5 h-5" />
             <span className="text-sm font-medium">{post.comments.toLocaleString('pt-BR')}</span>
         </Button>
