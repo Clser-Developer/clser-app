@@ -18,6 +18,21 @@ const StatCard: React.FC<{ value: string; label: string }> = React.memo(({ value
   </div>
 ));
 
+const ScopeNotice: React.FC<{ artistName: string }> = ({ artistName }) => (
+  <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+    <div className="flex items-start space-x-3">
+      <div className="bg-rose-50 p-3 rounded-2xl text-rose-500">
+        <Icon name="users" className="w-6 h-6" />
+      </div>
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500">Escopo deste artista</p>
+        <h3 className="text-lg font-bold text-gray-900 mt-1">Seu perfil de fa em {artistName}</h3>
+        <p className="text-sm text-gray-500 mt-2 leading-relaxed">Fanpoints, ranking, grupos e recompensas desta area valem apenas para {artistName}. Pagamentos e compras da conta continuam centralizados no Perfil.</p>
+      </div>
+    </div>
+  </div>
+);
+
 interface CategoryCardProps {
   icon: string;
   title: string;
@@ -63,24 +78,27 @@ const FanAreaHome: React.FC<FanAreaHomeProps> = ({ artist, fanPoints, onNavigate
   return (
     <div className="p-4 animate-fade-in space-y-6">
         <header>
-            <h2 className="text-3xl font-black text-gray-900">Área do Fã</h2>
-            <p className="text-gray-500">Conecte-se com a comunidade de {artist.name}.</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 mb-2">Area do Fa</p>
+            <h2 className="text-3xl font-black text-gray-900">Universo de {artist.name}</h2>
+            <p className="text-gray-500">Tudo aqui representa sua relacao com este artista.</p>
         </header>
+
+        <ScopeNotice artistName={artist.name} />
 
         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold text-gray-900">Minhas Estatísticas</h3>
+                <h3 className="text-lg font-bold text-gray-900">Minha Jornada com {artist.name}</h3>
                 <button onClick={onOpenPointsInfoModal} className="text-gray-400 hover:text-rose-500 transition-colors" aria-label="Saiba mais sobre Fan Points">
                     <Icon name="question-mark-circle" className="w-6 h-6" />
                 </button>
             </div>
             <div className="grid grid-cols-2 gap-4">
-            <StatCard value={fanPoints.toLocaleString('pt-BR')} label="Fan Points" />
-            <StatCard value={currentLevel.name} label="Nível de Fã" />
+            <StatCard value={fanPoints.toLocaleString('pt-BR')} label={`Fan Points em ${artist.name}`} />
+            <StatCard value={currentLevel.name} label="Nivel neste artista" />
             </div>
             {currentLevel.nextLevelPoints && (
             <div className="mt-6">
-                <h4 className="text-sm font-semibold mb-2 text-gray-600">Próximo Nível: {getFanLevel(currentLevel.nextLevelPoints).name}</h4>
+                <h4 className="text-sm font-semibold mb-2 text-gray-600">Proximo Nivel em {artist.name}: {getFanLevel(currentLevel.nextLevelPoints).name}</h4>
                 <div className="w-full bg-gray-100 rounded-full h-3">
                     <div className={`bg-gradient-to-r ${currentLevel.color} h-3 rounded-full transition-all duration-500`} style={{width: `${progressPercentage}%`}}></div>
                 </div>

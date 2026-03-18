@@ -3,10 +3,13 @@ import { Artist, PlanType, Plan, Section, FanAreaSection } from '../types';
 import Icon from './Icon';
 import PlanCard from './PlanCard';
 import EditProfileModal from './EditProfileModal';
+import { useBilling } from '../contexts/BillingContext';
 import { useGlobalUserState } from '../hooks/useGlobalUserState';
+import ContactVerificationModal from './ContactVerificationModal';
 
 interface ProfileViewProps {
   artist: Artist;
+  fanPoints: number;
   onNavigateToFanArea: () => void;
   onOpenPaymentHistory: () => void;
   onLogout: () => void;
@@ -31,7 +34,35 @@ const SettingsItem: React.FC<{ icon: string; title: string; subtitle?: string; o
   </button>
 );
 
+const SummaryStat: React.FC<{ value: string; label: string }> = ({ value, label }) => (
+  <div className="bg-gray-50 p-4 rounded-2xl text-center border border-gray-100 shadow-sm">
+    <p className="text-xl font-black text-gray-900">{value}</p>
+    <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mt-1">{label}</p>
+  </div>
+);
+
+const VerificationPill: React.FC<{ label: string; verified: boolean; onClick?: () => void }> = ({ label, verified, onClick }) => {
+  const className = `inline-flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-bold ${verified ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`;
+
+  if (!onClick) {
+    return (
+      <div className={className}>
+        <div className={`w-2 h-2 rounded-full ${verified ? 'bg-green-500' : 'bg-amber-500'}`}></div>
+        <span>{label}</span>
+      </div>
+    );
+  }
+
+  return (
+    <button onClick={onClick} className={`${className} hover:brightness-95 transition-all`}>
+      <div className={`w-2 h-2 rounded-full ${verified ? 'bg-green-500' : 'bg-amber-500'}`}></div>
+      <span>{label}</span>
+    </button>
+  );
+};
+
 const ProfileSummary: React.FC<{
+  artistName: string;
   nickname: string;
   profileImageUrl: string;
   fanPoints: number; // artist-specific
@@ -39,7 +70,7 @@ const ProfileSummary: React.FC<{
   onNavigateToFanArea: () => void;
   onViewImage: () => void;
   onEditProfile: () => void;
-}> = ({ nickname, profileImageUrl, fanPoints, onProfileImageChange, onNavigateToFanArea, onViewImage, onEditProfile }) => {
+}> = ({ artistName, nickname, profileImageUrl, fanPoints, onProfileImageChange, onNavigateToFanArea, onViewImage, onEditProfile }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +118,7 @@ const ProfileSummary: React.FC<{
                 className="mt-3 flex items-center space-x-2 bg-rose-50 px-4 py-1.5 rounded-full"
             >
                 <Icon name="users" className="w-4 h-4 text-rose-500" />
-                <span className="font-bold text-rose-600 text-sm">{fanPoints.toLocaleString('pt-BR')} Fan Points</span>
+                <span className="font-bold text-rose-600 text-sm">{fanPoints.toLocaleString('pt-BR')} Fan Points com {artistName}</span>
                 <Icon name="chevron-right" className="w-3 h-3 text-rose-400" />
             </button>
         </div>
@@ -96,13 +127,15 @@ const ProfileSummary: React.FC<{
 
 
 const ProfileView: React.FC<ProfileViewProps> = ({ 
-    artist, onNavigateToFanArea, onOpenPaymentHistory, onLogout, onViewImage,
+    artist, fanPoints, onNavigateToFanArea, onOpenPaymentHistory, onLogout, onViewImage,
     userNickname, userProfileImageUrl, onProfileImageChange, onEditAddress, onEditPaymentMethod
 }) => {
   
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editModalInitialTab, setEditModalInitialTab] = useState('personal');
-  const { hasCard } = useGlobalUserState();
+  const [verificationTarget, setVerificationTarget] = useState<'email' | 'phone' | null>(null);
+  const { hasCard, orders, paymentHistory, purchasedExperiences, purchasedTickets } = useBilling();
+  const { email, emailVerified, internalUserId, phone, phoneVerified, setEmailVerified, setPhoneVerified } = useGlobalUserState();
   
   const handleUnimplemented = () => alert("Funcionalidade em desenvolvimento.");
   
@@ -110,13 +143,11 @@ const ProfileView: React.FC<ProfileViewProps> = ({
     setEditModalInitialTab(tab);
     setIsEditModalVisible(true);
   };
-
-  const fanPoints = artist.fanPoints || 0;
-
   return (
     <>
     <div className="pb-6">
       <ProfileSummary 
+          artistName={artist.name}
           nickname={userNickname}
           profileImageUrl={userProfileImageUrl}
           fanPoints={fanPoints}
@@ -128,50 +159,73 @@ const ProfileView: React.FC<ProfileViewProps> = ({
       
       <div className="px-4 space-y-6">
         
-        {/* Card Status Section */}
         <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Status no Clube</h3>
-            
-            {hasCard ? (
-                <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-5 rounded-2xl shadow-lg relative overflow-hidden text-white">
-                    <div className="absolute top-[-20%] right-[-20%] w-32 h-32 bg-white/10 blur-2xl rounded-full"></div>
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <p className="text-xs text-white/60 mb-1">Assinatura Ativa</p>
-                            <p className="text-lg font-black italic tracking-wide">Membro Oficial</p>
-                        </div>
-                        <div className="flex space-x-1">
-                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                        </div>
-                    </div>
-                    <div className="mt-6 flex items-center justify-between">
-                        <p className="text-xs text-white/60">Mastercard **** 1234</p>
-                        <button onClick={handleUnimplemented} className="text-xs font-bold text-white hover:text-rose-200 transition-colors">Gerenciar</button>
-                    </div>
-                </div>
-            ) : (
-                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Conta Principal</h3>
+            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                <div className="flex items-start justify-between gap-4">
                     <div>
-                        <p className="text-lg font-bold text-gray-900">Fã Gratuito</p>
-                        <p className="text-xs text-gray-500 mt-1">Faça o upgrade para benefícios.</p>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">ID Interno</p>
+                        <p className="text-sm font-black text-gray-900 font-mono break-all">{internalUserId}</p>
+                        <p className="text-xs text-gray-500 mt-2">Esta conta vale para todos os artistas. Pagamentos, pedidos e ingressos ficam centralizados aqui.</p>
                     </div>
-                    <button className="bg-rose-500 text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-rose-600 transition-colors">
-                        Virar Membro
-                    </button>
+                    <div className="bg-white rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-gray-500 border border-gray-200 shrink-0">
+                        Conta Global
+                    </div>
                 </div>
-            )}
+                <div className="flex flex-wrap gap-2 mt-4">
+                    <VerificationPill label={emailVerified ? 'E-mail verificado' : 'Verificar e-mail'} verified={emailVerified} onClick={!emailVerified && email ? () => setVerificationTarget('email') : undefined} />
+                    <VerificationPill label={phoneVerified ? 'Telefone verificado' : 'Verificar telefone'} verified={phoneVerified} onClick={!phoneVerified && phone.number ? () => setVerificationTarget('phone') : undefined} />
+                </div>
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="bg-white rounded-2xl border border-gray-200 p-4">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">E-mail vinculado</p>
+                        <p className="text-sm font-bold text-gray-900 mt-2 break-all">{email || 'Nao informado'}</p>
+                    </div>
+                    <div className="bg-white rounded-2xl border border-gray-200 p-4">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Telefone vinculado</p>
+                        <p className="text-sm font-bold text-gray-900 mt-2">{phone.ddi} {phone.number || 'Nao informado'}</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        {/* Settings List */}
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
              <div className="p-4 pb-2">
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Minha Conta</h3>
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Conta</h3>
              </div>
-             <SettingsItem icon="profile" title="Dados Pessoais" subtitle="Nome, apelido e dados demográficos" onClick={() => openEditModal('personal')} />
-             <SettingsItem icon="truck" title="Endereço de Entrega" subtitle="Rua dos Fãs, 123..." onClick={onEditAddress} />
-             <SettingsItem icon="credit-card" title="Métodos de Pagamento" subtitle="Mastercard **** 1234" onClick={onEditPaymentMethod} />
-             <SettingsItem icon="document-text" title="Histórico Financeiro" subtitle="Ver todas as faturas e cobranças" onClick={onOpenPaymentHistory} />
+             <SettingsItem icon="profile" title="Dados da Conta" subtitle="Nome, apelido, perfil e dados cadastrais" onClick={() => openEditModal('personal')} />
+             <SettingsItem icon="truck" title="Endereço Principal" subtitle="Dados usados para compras e entregas da sua conta" onClick={onEditAddress} />
+        </div>
+
+        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex items-start justify-between gap-3 mb-5">
+                <div>
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Pagamento e Compras</h3>
+                    <p className="text-xs text-gray-500 mt-2">Tudo abaixo pertence a sua conta, independentemente do artista que estiver ativo.</p>
+                </div>
+                <div className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide ${hasCard ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {hasCard ? 'Pagamento ativo' : 'Sem pagamento salvo'}
+                </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mb-5">
+                <SummaryStat value={orders.length.toString()} label="Pedidos" />
+                <SummaryStat value={purchasedTickets.length.toString()} label="Ingressos" />
+                <SummaryStat value={purchasedExperiences.length.toString()} label="Experiências" />
+            </div>
+            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold text-gray-600">Recibos e cobranças emitidos</span>
+                    <span className="font-black text-gray-900">{paymentHistory.length}</span>
+                </div>
+            </div>
+        </div>
+
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+             <div className="p-4 pb-2">
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Financeiro</h3>
+             </div>
+             <SettingsItem icon="credit-card" title="Métodos de Pagamento" subtitle={hasCard ? 'Seu meio de pagamento vale para compras em qualquer artista' : 'Cadastre um método para comprar em qualquer artista'} onClick={onEditPaymentMethod} />
+             <SettingsItem icon="document-text" title="Histórico Financeiro" subtitle="Faturas, recibos e cobranças globais da conta" onClick={onOpenPaymentHistory} />
         </div>
 
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
@@ -196,6 +250,26 @@ const ProfileView: React.FC<ProfileViewProps> = ({
         isVisible={isEditModalVisible}
         onClose={() => setIsEditModalVisible(false)}
         initialTab={editModalInitialTab}
+    />
+    <ContactVerificationModal
+        isVisible={verificationTarget === 'email'}
+        type="email"
+        value={email}
+        onClose={() => setVerificationTarget(null)}
+        onVerified={() => {
+            setEmailVerified(true);
+            setVerificationTarget(null);
+        }}
+    />
+    <ContactVerificationModal
+        isVisible={verificationTarget === 'phone'}
+        type="phone"
+        value={`${phone.ddi} ${phone.number}`.trim()}
+        onClose={() => setVerificationTarget(null)}
+        onVerified={() => {
+            setPhoneVerified(true);
+            setVerificationTarget(null);
+        }}
     />
     </>
   );

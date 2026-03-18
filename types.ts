@@ -118,6 +118,12 @@ export interface Artist {
   cardAnuityPrice?: number; // Preço da anuidade do cartão
 }
 
+export interface ArtistMembership {
+  artistId: string;
+  joinedAt: string;
+  status: 'active';
+}
+
 export enum Section {
     TIMELINE = 'timeline',
     MEDIA = 'media',
@@ -173,6 +179,7 @@ export interface TrackingEvent {
 
 export interface Order {
     id: string;
+    artistId: string;
     date: string;
     status: OrderStatus;
     items: OrderItem[];
@@ -195,6 +202,7 @@ export enum TransactionType {
 
 export interface PaymentRecord {
   id: string;
+  artistId?: string;
   date: string;
   type: TransactionType;
   title: string;
@@ -424,4 +432,10 @@ export interface UserDemographics {
     birthDate: string;
     city: string;
     gender: 'Masculino' | 'Feminino' | 'Outro' | 'Prefiro não dizer' | '';
+}
+
+export interface AccountIdentity {
+  internalUserId: string;
+  emailVerified: boolean;
+  phoneVerified: boolean;
 }

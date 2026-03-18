@@ -1,21 +1,22 @@
-
-import React, { useState, useEffect } from 'react';
-import { Artist, Plan, UserAddress, UserPhone, PaymentRecord, TransactionType, PlanType, UserDemographics } from './types';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { Artist, ArtistMembership, UserAddress, UserPhone, UserDemographics } from './types';
 import { getArtists } from './services/mockApiService';
-import { useGlobalUserState, OnboardingDraft } from './hooks/useGlobalUserState';
+import { useGlobalUserState } from './hooks/useGlobalUserState';
+import { BillingProvider, useBilling } from './contexts/BillingContext';
+import { ArtistSessionProvider, useArtistSession } from './contexts/ArtistSessionContext';
+import { readStorageItem, writeStorageItem } from './lib/storage';
 import ArtistShowcase from './components/ArtistShowcase';
-import ArtistLandingPage from './components/ArtistLandingPage';
-import ArtistPage from './components/ArtistPage';
 import ArtistSwitcher from './components/ArtistSwitcher';
-import PaymentScreen from './components/PaymentScreen';
-import PaymentSuccessModal from './components/PaymentSuccessModal';
 import PointsAwardedModal from './components/PointsAwardedModal';
 import ImageViewerModal from './components/ImageViewerModal';
-import Onboarding from './components/Onboarding';
-import ArtistApp from './components/artist/ArtistApp';
 import DemoSelectionScreen from './components/DemoSelectionScreen';
-import PaymentSetupScreen from './components/PaymentSetupScreen';
 import Icon from './components/Icon';
+
+const ArtistLandingPage = lazy(() => import('./components/ArtistLandingPage'));
+const ArtistPage = lazy(() => import('./components/ArtistPage'));
+const Onboarding = lazy(() => import('./components/Onboarding'));
+const ArtistApp = lazy(() => import('./components/artist/ArtistApp'));
+const PaymentSetupScreen = lazy(() => import('./components/PaymentSetupScreen'));
 
 interface ImageViewerDetails {
   url: string;
@@ -35,14 +36,53 @@ export interface BillingData {
 }
 
 type AppMode = 'selection' | 'fan' | 'artist';
+const ARTIST_MEMBERSHIPS_STORAGE_KEY = 'artistMemberships';
+const LEGACY_SUBSCRIBED_ARTISTS_STORAGE_KEY = 'subscribedArtists';
 
-const App = () => {
+const createArtistMembership = (artistId: string): ArtistMembership => ({
+  artistId,
+  joinedAt: new Date().toISOString(),
+  status: 'active',
+});
+
+const normalizeArtistMemberships = (rawValue: unknown): ArtistMembership[] => {
+  if (!Array.isArray(rawValue)) {
+    return [];
+  }
+
+  return rawValue.reduce<ArtistMembership[]>((memberships, item) => {
+    if (typeof item !== 'object' || item === null) {
+      return memberships;
+    }
+
+    if ('artistId' in item && typeof item.artistId === 'string') {
+      memberships.push({
+        artistId: item.artistId,
+        joinedAt: typeof item.joinedAt === 'string' ? item.joinedAt : new Date().toISOString(),
+        status: 'active',
+      });
+      return memberships;
+    }
+
+    if ('id' in item && typeof item.id === 'string') {
+      memberships.push(createArtistMembership(item.id));
+    }
+
+    return memberships;
+  }, []);
+};
+
+const ScreenLoader = () => (
+  <div className="w-full h-full flex flex-col justify-center items-center bg-gray-50 text-gray-900">
+    <div className="w-12 h-12 border-4 border-rose-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+    <p className="text-lg font-semibold">Carregando universo...</p>
+  </div>
+);
+
+const AppContent = () => {
   const [allArtists, setAllArtists] = useState<Artist[]>([]);
   const [selectedArtistForAccess, setSelectedArtistForAccess] = useState<Artist | null>(null);
-  const [subscribedArtists, setSubscribedArtists] = useState<Artist[]>([]);
-  const [currentArtistId, setCurrentArtistId] = useState<string | null>(null);
-  const [lastViewedArtistId, setLastViewedArtistId] = useState<string | null>(null);
-  const [isSwitcherVisible, setSwitcherVisible] = useState(false);
+  const [artistMemberships, setArtistMemberships] = useState<ArtistMembership[]>([]);
   const [showPaymentSetup, setShowPaymentSetup] = useState(false);
   const [pointsModalData, setPointsModalData] = useState<{ points: number; reason: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,13 +90,22 @@ const App = () => {
   const [appMode, setAppMode] = useState<AppMode>('selection');
   const [showResumeScreen, setShowResumeScreen] = useState(false);
   const [isOnboardingActive, setIsOnboardingActive] = useState(false);
+  const {
+    currentArtistId,
+    isSwitcherVisible,
+    lastViewedArtistId,
+    resetFanNavigation,
+    setCurrentArtistId,
+    setLastViewedArtistId,
+    setSwitcherVisible,
+  } = useArtistSession();
 
   const {
+    emailVerified, setEmailVerified,
+    phoneVerified, setPhoneVerified,
     username, setUsername,
     nickname, setNickname,
     profileImageUrl, setProfileImageUrl,
-    paymentMethod, setPaymentMethod,
-    paymentHistory, setPaymentHistory,
     isAccountCreated, setIsAccountCreated,
     email, setEmail,
     fullName, setFullName,
@@ -64,10 +113,12 @@ const App = () => {
     phone, setPhone,
     address, setAddress,
     demographics, setDemographics,
-    hasCard, setHasCard,
     onboardingDraft, setOnboardingDraft,
     clearOnboardingDraft
   } = useGlobalUserState();
+  const {
+    setHasCard,
+  } = useBilling();
 
   useEffect(() => {
     const fetchArtists = async () => {
@@ -82,24 +133,52 @@ const App = () => {
 
   useEffect(() => {
     try {
-      const savedSubscribedArtists = localStorage.getItem('subscribedArtists');
-      const savedCurrentArtistId = localStorage.getItem('currentArtistId');
-      if (savedSubscribedArtists) setSubscribedArtists(JSON.parse(savedSubscribedArtists));
-      if (savedCurrentArtistId) setCurrentArtistId(JSON.parse(savedCurrentArtistId));
-    } catch (e) { console.error("Failed to load state", e); }
+      const savedMemberships = readStorageItem(ARTIST_MEMBERSHIPS_STORAGE_KEY);
+      const legacySubscribedArtists = readStorageItem(LEGACY_SUBSCRIBED_ARTISTS_STORAGE_KEY);
+
+      if (savedMemberships) {
+        setArtistMemberships(normalizeArtistMemberships(JSON.parse(savedMemberships)));
+        return;
+      }
+
+      if (legacySubscribedArtists) {
+        setArtistMemberships(normalizeArtistMemberships(JSON.parse(legacySubscribedArtists)));
+      }
+    } catch (e) { console.error("Failed to load artist memberships", e); }
   }, []);
 
   useEffect(() => {
     try {
-      localStorage.setItem('subscribedArtists', JSON.stringify(subscribedArtists));
-      if (currentArtistId) localStorage.setItem('currentArtistId', JSON.stringify(currentArtistId));
-      else localStorage.removeItem('currentArtistId');
-    } catch (e) { console.error("Failed to save state", e); }
-  }, [subscribedArtists, currentArtistId]);
+      writeStorageItem(ARTIST_MEMBERSHIPS_STORAGE_KEY, JSON.stringify(artistMemberships));
+    } catch (e) { console.error("Failed to save artist memberships", e); }
+  }, [artistMemberships]);
+
+  const subscribedArtists = useMemo(
+    () =>
+      artistMemberships
+        .map((membership) => allArtists.find((artist) => artist.id === membership.artistId))
+        .filter((artist): artist is Artist => Boolean(artist)),
+    [allArtists, artistMemberships]
+  );
+
+  const hasArtistMembership = (artistId: string) =>
+    artistMemberships.some((membership) => membership.artistId === artistId);
+
+  const ensureArtistMembership = (artistId: string) => {
+    setArtistMemberships((prev) => {
+      if (prev.some((membership) => membership.artistId === artistId)) {
+        return prev;
+      }
+
+      return [...prev, createArtistMembership(artistId)];
+    });
+  };
 
   const handleOnboardingComplete = (details: { 
       email: string, 
       phone: string,
+      emailVerified: boolean,
+      phoneVerified: boolean,
       username: string, 
       nickname: string, 
       profileImageUrl: string, 
@@ -107,6 +186,8 @@ const App = () => {
   }) => {
     setEmail(details.email);
     setPhone({ ddi: '+55', number: details.phone });
+    setEmailVerified(details.emailVerified);
+    setPhoneVerified(details.phoneVerified);
     setUsername(details.username);
     setNickname(details.nickname);
     setProfileImageUrl(details.profileImageUrl);
@@ -131,9 +212,10 @@ const App = () => {
 
   const finalizeAccess = () => {
       setShowPaymentSetup(false);
+      resetFanNavigation();
       if (selectedArtistForAccess) {
-          if (!subscribedArtists.find(a => a.id === selectedArtistForAccess.id)) {
-              setSubscribedArtists(prev => [...prev, selectedArtistForAccess]);
+          if (!hasArtistMembership(selectedArtistForAccess.id)) {
+              ensureArtistMembership(selectedArtistForAccess.id);
           }
           setCurrentArtistId(selectedArtistForAccess.id);
           setSelectedArtistForAccess(null);
@@ -148,8 +230,9 @@ const App = () => {
 
   const handleJoinFree = (artist: Artist) => {
     if (isAccountCreated) {
-        if (!subscribedArtists.find(a => a.id === artist.id)) {
-            setSubscribedArtists(prev => [...prev, artist]);
+        resetFanNavigation();
+        if (!hasArtistMembership(artist.id)) {
+            ensureArtistMembership(artist.id);
         }
         setCurrentArtistId(artist.id);
         setSelectedArtistForAccess(null);
@@ -159,13 +242,20 @@ const App = () => {
   };
 
   const handleLogout = () => { 
+    resetFanNavigation();
     setAppMode('selection'); 
     setSelectedArtistForAccess(null);
     setIsOnboardingActive(false);
   };
   
-  const currentArtist = subscribedArtists.find(a => a.id === currentArtistId);
-  const artistsForShowcase = allArtists.filter(a => !subscribedArtists.some(sub => sub.id === a.id));
+  const currentArtist = useMemo(
+    () => subscribedArtists.find((artist) => artist.id === currentArtistId),
+    [subscribedArtists, currentArtistId]
+  );
+  const artistsForShowcase = useMemo(
+    () => allArtists.filter((artist) => !artistMemberships.some((membership) => membership.artistId === artist.id)),
+    [allArtists, artistMemberships]
+  );
 
   const enterFanApp = () => {
       setAppMode('fan');
@@ -206,12 +296,7 @@ const App = () => {
 
   const mainContent = () => {
     if (isLoading) {
-      return (
-        <div className="w-full h-full flex flex-col justify-center items-center bg-gray-50 text-gray-900">
-          <div className="w-12 h-12 border-4 border-rose-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-lg font-semibold">Carregando universo...</p>
-        </div>
-      );
+      return <ScreenLoader />;
     }
 
     if (appMode === 'selection') return <DemoSelectionScreen onSelectFan={enterFanApp} onSelectArtist={enterArtistApp} />;
@@ -230,14 +315,12 @@ const App = () => {
         <div className="bg-gray-50 text-gray-900 h-full">
           <ArtistPage 
             artist={currentArtist} onViewImage={setImageViewerState} updateImageViewer={(u) => setImageViewerState(p => p ? {...p, ...u} : null)}
-            onSwitchArtist={() => setSwitcherVisible(true)} onLogout={handleLogout} userNickname={nickname}
+            onLogout={handleLogout} userNickname={nickname}
             onNicknameChange={setNickname} userProfileImageUrl={profileImageUrl} onProfileImageChange={setProfileImageUrl}
-            globalPaymentMethod={paymentMethod} onGlobalPaymentMethodChange={setPaymentMethod} globalPaymentHistory={paymentHistory}
-            onGlobalPaymentHistoryChange={setPaymentHistory}
           />
           <ArtistSwitcher
             isVisible={isSwitcherVisible} onClose={() => setSwitcherVisible(false)} artists={subscribedArtists}
-            currentArtistId={currentArtistId!} onSelectArtist={setCurrentArtistId} onFindMoreArtists={() => { setLastViewedArtistId(currentArtistId); setCurrentArtistId(null); setSelectedArtistForAccess(null); setSwitcherVisible(false); }}
+            currentArtistId={currentArtistId!} onSelectArtist={setCurrentArtistId} onFindMoreArtists={() => { setLastViewedArtistId(currentArtistId); resetFanNavigation(); setCurrentArtistId(null); setSelectedArtistForAccess(null); }}
             onViewImage={(url) => setImageViewerState({ url })}
           />
           {pointsModalData && <PointsAwardedModal isVisible={true} points={pointsModalData.points} reason={pointsModalData.reason} onClose={() => setPointsModalData(null)} />}
@@ -283,10 +366,22 @@ const App = () => {
   }
 
   return (
-    <>
-      {mainContent()}
-      <ImageViewerModal details={imageViewerState} onClose={() => setImageViewerState(null)} />
-    </>
+    <Suspense fallback={<ScreenLoader />}>
+      <>
+        {mainContent()}
+        <ImageViewerModal details={imageViewerState} onClose={() => setImageViewerState(null)} />
+      </>
+    </Suspense>
+  );
+};
+
+const App = () => {
+  return (
+    <BillingProvider>
+      <ArtistSessionProvider>
+        <AppContent />
+      </ArtistSessionProvider>
+    </BillingProvider>
   );
 };
 

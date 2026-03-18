@@ -70,14 +70,14 @@ const LeaderboardItem: React.FC<{ fan: FanProfile, rank: number, onFanClick: (fa
   );
 });
 
-const LeaderboardView: React.FC<{ leaderboard: FanProfile[], onBack: () => void, onFanClick: (fan: FanProfile) => void }> = ({ leaderboard, onBack, onFanClick }) => {
+const LeaderboardView: React.FC<{ artistName: string; leaderboard: FanProfile[], onBack: () => void, onFanClick: (fan: FanProfile) => void }> = ({ artistName, leaderboard, onBack, onFanClick }) => {
   const topFans = leaderboard.slice(0, 20);
   const currentUserIndex = leaderboard.findIndex(f => f.isCurrentUser);
   const currentUser = currentUserIndex !== -1 ? leaderboard[currentUserIndex] : null;
   const isCurrentUserInTop = currentUserIndex !== -1 && currentUserIndex < 20;
 
-  return (
-    <FanAreaSubSection title="Ranking de Fãs" onBack={onBack}>
+    return (
+    <FanAreaSubSection title={`Ranking em ${artistName}`} onBack={onBack}>
       {leaderboard.length > 0 ? (
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden p-2">
           <ul className="space-y-1">
@@ -107,18 +107,19 @@ const LeaderboardView: React.FC<{ leaderboard: FanProfile[], onBack: () => void,
 
 
 const RewardsView: React.FC<{
+  artistName: string;
   onBack: () => void;
   rewards: ExclusiveReward[];
   fanPoints: number;
   leaderboard: FanProfile[];
   onViewRewardDetails: (reward: ExclusiveReward) => void;
-}> = ({ onBack, rewards, fanPoints, leaderboard, onViewRewardDetails }) => {
+}> = ({ artistName, onBack, rewards, fanPoints, leaderboard, onViewRewardDetails }) => {
   const currentUserRank = leaderboard.find(f => f.isCurrentUser)?.id
     ? leaderboard.findIndex(f => f.isCurrentUser) + 1
     : null;
 
   return (
-    <FanAreaSubSection title="Recompensas" onBack={onBack}>
+    <FanAreaSubSection title={`Recompensas em ${artistName}`} onBack={onBack}>
       {rewards.length > 0 ? (
         <div className="space-y-4">
           {rewards.map(reward => {
@@ -181,9 +182,10 @@ const GroupsView: React.FC<{
     joinedGroupIds: Set<string>,
     onBack: () => void,
     onViewGroup: (group: FanGroup) => void,
-}> = ({ groups, joinedGroupIds, onBack, onViewGroup }) => {
+    artistName: string;
+}> = ({ groups, joinedGroupIds, onBack, onViewGroup, artistName }) => {
     return (
-        <FanAreaSubSection title="Grupos de Fãs" onBack={onBack}>
+        <FanAreaSubSection title={`Comunidade de ${artistName}`} onBack={onBack}>
             {groups.length > 0 ? (
                 <div className="space-y-4">
                     {groups.map(group => (
@@ -223,7 +225,7 @@ const PollsView: React.FC<{
     const otherPolls = polls.filter(p => p.id !== targetItemId);
 
     return (
-        <FanAreaSubSection title="Enquetes" onBack={onBack}>
+        <FanAreaSubSection title={`Enquetes de ${artist.name}`} onBack={onBack}>
             <div className="space-y-4">
                 {targetPoll && (
                      <PostCard
@@ -326,11 +328,12 @@ const FanAreaView: React.FC<FanAreaViewProps> = ({
                           onAddPost={onAddMuralPost}
                        />;
             case FanAreaSection.LEADERBOARD:
-                return <LeaderboardView leaderboard={leaderboard} onBack={() => onSectionChange(FanAreaSection.HOME)} onFanClick={setSelectedFan}/>;
+                return <LeaderboardView artistName={artist.name} leaderboard={leaderboard} onBack={() => onSectionChange(FanAreaSection.HOME)} onFanClick={setSelectedFan}/>;
             case FanAreaSection.GROUPS:
-                return <GroupsView groups={fanGroups} joinedGroupIds={joinedGroupIds} onBack={() => onSectionChange(FanAreaSection.HOME)} onViewGroup={setSelectedGroup} />;
+                return <GroupsView artistName={artist.name} groups={fanGroups} joinedGroupIds={joinedGroupIds} onBack={() => onSectionChange(FanAreaSection.HOME)} onViewGroup={setSelectedGroup} />;
             case FanAreaSection.REWARDS:
                 return <RewardsView 
+                            artistName={artist.name}
                             rewards={rewards} 
                             fanPoints={fanPoints}
                             leaderboard={leaderboard}

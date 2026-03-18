@@ -1,6 +1,7 @@
 
-import { useState, useEffect } from 'react';
-import { PaymentRecord, UserAddress, UserPhone, UserDemographics } from '../types';
+import { useEffect, useMemo, useState } from 'react';
+import { AccountIdentity, UserAddress, UserPhone, UserDemographics } from '../types';
+import { readStorageItem, removeStorageItem, writeStorageItem } from '../lib/storage';
 
 export interface OnboardingDraft {
     step: number;
@@ -14,16 +15,23 @@ export interface OnboardingDraft {
     backupIdentifier?: string; // Segundo fator opcional
 }
 
+const generateInternalUserId = () => {
+    const randomChunk = Math.random().toString(36).slice(2, 10).toUpperCase();
+    const timestampChunk = Date.now().toString(36).slice(-6).toUpperCase();
+    return `USR_${timestampChunk}${randomChunk}`;
+};
+
 const getInitialState = () => {
-    const savedStateJSON = localStorage.getItem('globalUserState');
-    const draftJSON = localStorage.getItem('clser_onboarding_draft');
+    const savedStateJSON = readStorageItem('globalUserState');
+    const draftJSON = readStorageItem('clser_onboarding_draft');
     
     let initialState = {
+        internalUserId: generateInternalUserId(),
+        emailVerified: false,
+        phoneVerified: false,
         username: '',
         nickname: 'Fã nº 1',
         profileImageUrl: 'https://picsum.photos/seed/user-profile/200/200',
-        paymentMethod: 'credit-card' as const,
-        paymentHistory: [] as PaymentRecord[],
         isAccountCreated: false,
         email: '',
         fullName: '',
@@ -31,7 +39,6 @@ const getInitialState = () => {
         phone: { ddi: '+55', number: '' } as UserPhone,
         address: { cep: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '' } as UserAddress,
         demographics: { birthDate: '', city: '', gender: '' } as UserDemographics,
-        hasCard: false,
         onboardingDraft: null as OnboardingDraft | null
     };
 
@@ -56,48 +63,62 @@ const getInitialState = () => {
 };
 
 export const useGlobalUserState = () => {
-    const [username, setUsername] = useState<string>(() => getInitialState().username);
-    const [nickname, setNickname] = useState<string>(() => getInitialState().nickname);
-    const [profileImageUrl, setProfileImageUrl] = useState<string>(() => getInitialState().profileImageUrl);
-    const [paymentMethod, setPaymentMethod] = useState<'credit-card' | 'pix'>(() => getInitialState().paymentMethod);
-    const [paymentHistory, setPaymentHistory] = useState<PaymentRecord[]>(() => getInitialState().paymentHistory);
-    const [isAccountCreated, setIsAccountCreated] = useState<boolean>(() => getInitialState().isAccountCreated);
-    const [email, setEmail] = useState<string>(() => getInitialState().email);
-    const [fullName, setFullName] = useState<string>(() => getInitialState().fullName);
-    const [cpf, setCpf] = useState<string>(() => getInitialState().cpf);
-    const [phone, setPhone] = useState<UserPhone>(() => getInitialState().phone);
-    const [address, setAddress] = useState<UserAddress>(() => getInitialState().address);
-    const [demographics, setDemographics] = useState<UserDemographics>(() => getInitialState().demographics);
-    const [hasCard, setHasCard] = useState<boolean>(() => getInitialState().hasCard);
-    const [onboardingDraft, setOnboardingDraft] = useState<OnboardingDraft | null>(() => getInitialState().onboardingDraft);
+    const initialState = useMemo(() => getInitialState(), []);
+
+    const [internalUserId] = useState<AccountIdentity['internalUserId']>(initialState.internalUserId);
+    const [emailVerified, setEmailVerified] = useState<AccountIdentity['emailVerified']>(initialState.emailVerified);
+    const [phoneVerified, setPhoneVerified] = useState<AccountIdentity['phoneVerified']>(initialState.phoneVerified);
+    const [username, setUsername] = useState<string>(initialState.username);
+    const [nickname, setNickname] = useState<string>(initialState.nickname);
+    const [profileImageUrl, setProfileImageUrl] = useState<string>(initialState.profileImageUrl);
+    const [isAccountCreated, setIsAccountCreated] = useState<boolean>(initialState.isAccountCreated);
+    const [email, setEmail] = useState<string>(initialState.email);
+    const [fullName, setFullName] = useState<string>(initialState.fullName);
+    const [cpf, setCpf] = useState<string>(initialState.cpf);
+    const [phone, setPhone] = useState<UserPhone>(initialState.phone);
+    const [address, setAddress] = useState<UserAddress>(initialState.address);
+    const [demographics, setDemographics] = useState<UserDemographics>(initialState.demographics);
+    const [onboardingDraft, setOnboardingDraft] = useState<OnboardingDraft | null>(initialState.onboardingDraft);
 
     useEffect(() => {
         const stateToSave = {
-            username, nickname, profileImageUrl, paymentMethod, paymentHistory,
-            isAccountCreated, email, fullName, cpf, phone, address, demographics, hasCard
+            internalUserId,
+            emailVerified,
+            phoneVerified,
+            username,
+            nickname,
+            profileImageUrl,
+            isAccountCreated,
+            email,
+            fullName,
+            cpf,
+            phone,
+            address,
+            demographics,
         };
-        localStorage.setItem('globalUserState', JSON.stringify(stateToSave));
-    }, [username, nickname, profileImageUrl, paymentMethod, paymentHistory, isAccountCreated, email, fullName, cpf, phone, address, demographics, hasCard]);
+        writeStorageItem('globalUserState', JSON.stringify(stateToSave));
+    }, [internalUserId, emailVerified, phoneVerified, username, nickname, profileImageUrl, isAccountCreated, email, fullName, cpf, phone, address, demographics]);
 
     useEffect(() => {
         if (onboardingDraft) {
-            localStorage.setItem('clser_onboarding_draft', JSON.stringify(onboardingDraft));
+            writeStorageItem('clser_onboarding_draft', JSON.stringify(onboardingDraft));
         } else {
-            localStorage.removeItem('clser_onboarding_draft');
+            removeStorageItem('clser_onboarding_draft');
         }
     }, [onboardingDraft]);
 
     const clearOnboardingDraft = () => {
         setOnboardingDraft(null);
-        localStorage.removeItem('clser_onboarding_draft');
+        removeStorageItem('clser_onboarding_draft');
     };
 
     return {
+        internalUserId,
+        emailVerified, setEmailVerified,
+        phoneVerified, setPhoneVerified,
         username, setUsername,
         nickname, setNickname,
         profileImageUrl, setProfileImageUrl,
-        paymentMethod, setPaymentMethod,
-        paymentHistory, setPaymentHistory,
         isAccountCreated, setIsAccountCreated,
         email, setEmail,
         fullName, setFullName,
@@ -105,7 +126,6 @@ export const useGlobalUserState = () => {
         phone, setPhone,
         address, setAddress,
         demographics, setDemographics,
-        hasCard, setHasCard,
         onboardingDraft, setOnboardingDraft,
         clearOnboardingDraft
     };

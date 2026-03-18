@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Artist, ArtistSection, Post, FanGroup, FanProfile, Order, MerchItem } from '../../types';
-import { usePersistentArtistState } from '../../hooks/usePersistentArtistState';
 import { getFanLeaderboard, getFanGroupsForArtist } from '../../services/mockApiService';
+import { useBilling } from '../../contexts/BillingContext';
+import { ArtistFanProvider, useArtistFan } from '../../contexts/ArtistFanContext';
 import ArtistBottomNav from './ArtistBottomNav';
 import StudioView from './views/StudioView';
 import DashboardView from './views/DashboardView';
@@ -16,19 +17,20 @@ interface ArtistAppProps {
   onViewImage: (details: any) => void;
 }
 
-const ArtistApp: React.FC<ArtistAppProps> = ({ artist: initialArtist, onExit, onViewImage }) => {
+const ArtistAppContent: React.FC<ArtistAppProps> = ({ artist: initialArtist, onExit, onViewImage }) => {
   const [activeSection, setActiveSection] = useState<ArtistSection>(ArtistSection.DASHBOARD);
   const [leaderboard, setLeaderboard] = useState<FanProfile[]>([]);
   const [currentArtist, setCurrentArtist] = useState<Artist>(initialArtist);
+  const { getOrdersForArtist, setOrders } = useBilling();
 
   const {
       posts, setPosts,
       merch, setMerch,
-      orders, setOrders,
       events,
       fanGroups, setFanGroups,
       fanPoints 
-  } = usePersistentArtistState(currentArtist.id, currentArtist.fanPoints || 0);
+  } = useArtistFan();
+  const orders = getOrdersForArtist(currentArtist.id);
 
   useEffect(() => {
       setCurrentArtist(initialArtist);
@@ -162,6 +164,16 @@ const ArtistApp: React.FC<ArtistAppProps> = ({ artist: initialArtist, onExit, on
 
       <ArtistBottomNav activeSection={activeSection} onSectionChange={setActiveSection} />
     </div>
+  );
+};
+
+const ArtistApp: React.FC<ArtistAppProps> = (props) => {
+  const { artist } = props;
+
+  return (
+    <ArtistFanProvider artistId={artist.id} initialFanPoints={artist.fanPoints || 0}>
+      <ArtistAppContent {...props} />
+    </ArtistFanProvider>
   );
 };
 

@@ -8,6 +8,8 @@ interface OnboardingProps {
     onComplete: (details: { 
         email: string, 
         phone: string,
+        emailVerified: boolean,
+        phoneVerified: boolean,
         username: string, 
         nickname: string, 
         profileImageUrl: string, 
@@ -32,7 +34,7 @@ const ESTADOS_BRASIL = [
 ];
 
 const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraft, artistId, onCancel }) => {
-    // Machine States: 1 (Access), 1.5 (Confirm Phone), 2 (OTP), 3 (Username & PWD), 4 (Security Backup), 5 (Personal Data), 6 (Photo), 7 (Review)
+    // Machine States: 1 (Access), 1.5 (Confirm Phone), 2 (Primary OTP), 3 (Username & PWD), 4 (Secondary Contact), 5 (Secondary OTP), 6 (Personal Data), 7 (Photo), 8 (Review)
     const [step, setStep] = useState(draft?.step || 1);
     const [idType, setIdType] = useState<'email' | 'phone'>(draft?.identifierType || 'email');
     const [identifier, setIdentifier] = useState(draft?.identifier || '');
@@ -126,6 +128,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
         if (step === 1) onCancel();
         else if (step === 2 && idType === 'phone') setStep(1.5);
         else if (step === 1.5) setStep(1);
+        else if (step === 5) setStep(4);
         else setStep(s => s - 1);
     };
 
@@ -135,9 +138,16 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
         newOtp[index] = value.slice(-1);
         setOtp(newOtp);
         if (value && index < 5) {
-            document.getElementById(`otp-${index + 1}`)?.focus();
+            const nextInputId = step === 5 ? `otp-secondary-${index + 1}` : `otp-${index + 1}`;
+            document.getElementById(nextInputId)?.focus();
         }
     };
+
+    useEffect(() => {
+        if (step === 2 || step === 5) {
+            setOtp(['', '', '', '', '', '']);
+        }
+    }, [step]);
 
     const handleFinalSubmit = () => {
         const finalEmail = idType === 'email' ? identifier : backupId;
@@ -146,6 +156,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
         onComplete({
             email: finalEmail,
             phone: finalPhone,
+            emailVerified: true,
+            phoneVerified: true,
             username: `@${username.replace('@', '')}`,
             nickname: fullName || username,
             profileImageUrl: profileImageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
@@ -157,10 +169,14 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
         <div className="fixed top-0 left-0 w-full h-1.5 bg-gray-100 z-50">
             <div 
                 className="h-full bg-rose-500 transition-all duration-500 ease-out" 
-                style={{ width: `${(step / 7) * 100}%` }}
+                style={{ width: `${(step / 8) * 100}%` }}
             ></div>
         </div>
     );
+
+    const secondaryIdentifierLabel = idType === 'email' ? 'Celular para seguranca' : 'E-mail para seguranca';
+    const secondaryIdentifierPlaceholder = idType === 'email' ? '(00) 00000-0000' : 'seu@email.com';
+    const secondaryIdentifierIsValid = idType === 'email' ? backupId.length >= 10 : backupId.includes('@');
 
     const filteredCities = cities.filter(c => 
         c.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(
@@ -426,44 +442,86 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
                 </div>
             )}
 
-            {/* STEP 4: BACKUP (OPTIONAL) */}
+            {/* STEP 4: SECONDARY CONTACT */}
             {step === 4 && (
                 <div className="flex flex-col flex-grow animate-fade-in">
-                    <button onClick={handleNext} className="absolute top-6 right-4 text-xs font-black text-rose-500 uppercase tracking-widest py-2 px-3">Pular</button>
-                    
-                    <h1 className="text-3xl font-black mb-2 mt-8 leading-tight">Backup de Segurança</h1>
+                    <h1 className="text-3xl font-black mb-2 mt-8 leading-tight">Canal de Segurança</h1>
                     <p className="text-gray-500 mb-10 font-medium">
-                        Adicione seu {idType === 'email' ? 'número de celular' : 'e-mail'} como método de recuperação secundário.
+                        Para proteger sua conta e evitar duplicidade, precisamos vincular e verificar tambem seu {idType === 'email' ? 'telefone' : 'e-mail'}.
                     </p>
 
                     <div className="space-y-4">
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">
-                             {idType === 'email' ? 'Celular para recuperação' : 'E-mail para recuperação'}
+                             {secondaryIdentifierLabel}
                         </label>
                         <input
                             type={idType === 'email' ? 'tel' : 'email'}
                             value={backupId}
                             onChange={(e) => setBackupId(e.target.value)}
-                            placeholder={idType === 'email' ? '(00) 00000-0000' : 'seu@email.com'}
+                            placeholder={secondaryIdentifierPlaceholder}
                             className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-5 text-xl font-bold focus:ring-2 focus:ring-rose-500 outline-none transition-all"
                         />
                     </div>
 
                     <p className="text-xs text-gray-400 mt-6 font-medium leading-relaxed">
-                        Recomendamos este passo para que você nunca perca o acesso às suas experiências exclusivas.
+                        Esta etapa e obrigatoria para deixar sua conta associada a um e-mail e a um telefone verificados.
                     </p>
 
                     <button 
                         onClick={handleNext}
-                        className="mt-auto mb-8 w-full bg-gray-900 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all"
+                        disabled={!secondaryIdentifierIsValid}
+                        className="mt-auto mb-8 w-full bg-gray-900 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400"
                     >
-                        Salvar e Continuar
+                        Continuar verificacao
                     </button>
                 </div>
             )}
 
-            {/* STEP 5: DADOS PESSOAIS */}
+            {/* STEP 5: SECONDARY OTP */}
             {step === 5 && (
+                <div className="flex flex-col flex-grow animate-fade-in">
+                    <h1 className="text-3xl font-black mb-2 mt-8 leading-tight">Confirmar canal de seguranca</h1>
+                    <p className="text-gray-500 mb-8 font-medium">
+                        Enviamos um codigo de 6 digitos para: <br/>
+                        <span className="text-rose-500 font-bold">{backupId}</span>
+                    </p>
+                    
+                    <div className="flex gap-2 justify-center mb-8">
+                        {otp.map((digit, idx) => (
+                            <input
+                                key={idx}
+                                id={`otp-secondary-${idx}`}
+                                type="text"
+                                inputMode="numeric"
+                                value={digit}
+                                onChange={(e) => handleOtpChange(idx, e.target.value)}
+                                className="w-11 h-14 bg-gray-50 border-2 border-gray-100 rounded-xl text-center text-2xl font-black focus:ring-2 focus:ring-rose-500 outline-none shadow-sm"
+                            />
+                        ))}
+                    </div>
+
+                    <div className="text-center space-y-4">
+                        <button className="text-rose-500 font-bold text-xs uppercase tracking-widest hover:underline">Reenviar codigo</button>
+                        <button 
+                            onClick={() => setStep(4)}
+                            className="block w-full text-gray-400 font-bold text-xs uppercase tracking-widest hover:text-gray-600"
+                        >
+                            Alterar {idType === 'email' ? 'telefone' : 'e-mail'}
+                        </button>
+                    </div>
+
+                    <button 
+                        onClick={handleNext}
+                        disabled={otp.some(d => !d)}
+                        className="mt-auto mb-8 w-full bg-gray-900 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400"
+                    >
+                        Confirmar verificacao
+                    </button>
+                </div>
+            )}
+
+            {/* STEP 6: DADOS PESSOAIS */}
+            {step === 6 && (
                 <div className="flex flex-col flex-grow animate-fade-in">
                     <button onClick={handleNext} className="absolute top-6 right-4 text-xs font-black text-rose-500 uppercase tracking-widest py-2 px-3">Pular</button>
                     
@@ -538,8 +596,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
                 </div>
             )}
 
-            {/* STEP 6: PHOTO */}
-            {step === 6 && (
+            {/* STEP 7: PHOTO */}
+            {step === 7 && (
                 <div className="flex flex-col items-center text-center flex-grow animate-fade-in">
                     <button onClick={handleNext} className="absolute top-6 right-4 text-xs font-black text-rose-500 uppercase tracking-widest py-2 px-3">Pular</button>
                     
@@ -585,8 +643,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
                 </div>
             )}
 
-            {/* STEP 7: FINAL REVIEW & PREVIEW */}
-            {step === 7 && (
+            {/* STEP 8: FINAL REVIEW & PREVIEW */}
+            {step === 8 && (
                 <div className="flex flex-col flex-grow animate-fade-in overflow-y-auto no-scrollbar">
                     <h1 className="text-3xl font-black mb-2 mt-8 leading-tight">Tudo pronto!</h1>
                     <p className="text-gray-500 mb-8 font-medium">Confira como você será visto na plataforma.</p>
@@ -643,8 +701,12 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
                             </div>
                         </div>
                         <div>
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Acesso Principal</p>
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Canal Principal</p>
                             <p className="text-sm font-bold text-gray-900">{identifier}</p>
+                        </div>
+                        <div>
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Canal Secundario Verificado</p>
+                            <p className="text-sm font-bold text-gray-900">{backupId}</p>
                         </div>
                     </div>
 

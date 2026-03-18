@@ -2,7 +2,9 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Artist, Post, Section, StoreSection, FanAreaSection, Order, OrderStatus, FanProfile, Comment, AuctionItem, ExclusiveReward, RewardType, Event, MerchItem, MediaItem, MediaPlatform, MediaType, CartItem, PurchasedTicket, PaymentRecord, TicketSelection, MuralPost, FanArtPost, VaquinhaCampaign, TransactionType, PlanType, FanGroup, ExperienceItem, PurchasedExperience } from '../types';
 import { getPostsForArtist, getMerchForArtist, getEventsForArtist, getFanLeaderboard, getCommentsForPost, getAuctionsForArtist, getExclusiveRewardsForArtist, getMediaForArtist, getMuralPosts, getFanArtPosts, getVaquinhaCampaignsForArtist, getFanGroupsForArtist, getExperiencesForArtist } from '../services/mockApiService';
-import { usePersistentArtistState } from '../hooks/usePersistentArtistState';
+import { useBilling } from '../contexts/BillingContext';
+import { ArtistFanProvider, useArtistFan } from '../contexts/ArtistFanContext';
+import { useArtistSession } from '../contexts/ArtistSessionContext';
 
 import Header from './Header';
 import BottomNav from './BottomNav';
@@ -57,16 +59,11 @@ interface ArtistPageProps {
   artist: Artist;
   onViewImage: (details: ImageViewerDetails) => void;
   updateImageViewer: (updates: Partial<ImageViewerDetails>) => void;
-  onSwitchArtist: () => void;
   onLogout: () => void;
   userNickname: string;
   onNicknameChange: (name: string) => void;
   userProfileImageUrl: string;
   onProfileImageChange: (dataUrl: string) => void;
-  globalPaymentMethod: 'credit-card' | 'pix';
-  onGlobalPaymentMethodChange: (method: 'credit-card' | 'pix') => void;
-  globalPaymentHistory: PaymentRecord[];
-  onGlobalPaymentHistoryChange: React.Dispatch<React.SetStateAction<PaymentRecord[]>>;
 }
 
 const LoadingSpinner: React.FC = () => (
@@ -75,18 +72,10 @@ const LoadingSpinner: React.FC = () => (
     </div>
 );
 
-const ArtistPage: React.FC<ArtistPageProps> = ({ 
-    artist, onViewImage, updateImageViewer, onSwitchArtist, onLogout,
+const ArtistPageContent: React.FC<ArtistPageProps> = ({ 
+    artist, onViewImage, updateImageViewer, onLogout,
     userNickname, onNicknameChange, userProfileImageUrl, onProfileImageChange,
-    globalPaymentMethod, onGlobalPaymentMethodChange, globalPaymentHistory, onGlobalPaymentHistoryChange
 }) => {
-  const [activeSection, setActiveSection] = useState<Section>(Section.TIMELINE);
-  const [storeSection, setStoreSection] = useState<StoreSection>(StoreSection.HOME);
-  const [fanAreaSection, setFanAreaSection] = useState<FanAreaSection>(FanAreaSection.HOME);
-  const [storeViewTargetItemId, setStoreViewTargetItemId] = useState<string | null>(null);
-  const [fanAreaViewTargetItemId, setFanAreaViewTargetItemId] = useState<string | null>(null);
-  const [activeTicketTab, setActiveTicketTab] = useState<'available' | 'my_tickets'>('available');
-
   const {
       fanPoints, setFanPoints,
       likedPostIds, setLikedPostIds,
@@ -94,10 +83,6 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
       likedMuralPostIds, setLikedMuralPostIds,
       likedFanArtPostIds, setLikedFanArtPostIds,
       joinedGroupIds, setJoinedGroupIds,
-      shoppingCart, setShoppingCart,
-      orders, setOrders,
-      purchasedTickets, setPurchasedTickets,
-      purchasedExperiences, setPurchasedExperiences,
       posts, setPosts,
       merch, setMerch,
       events, setEvents,
@@ -110,7 +95,37 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
       media, setMedia,
       muralPosts, setMuralPosts,
       fanArtPosts, setFanArtPosts,
-  } = usePersistentArtistState(artist.id, artist.fanPoints || 0);
+  } = useArtistFan();
+  const {
+      addOrder,
+      addPaymentRecord,
+      addPurchasedExperience,
+      addPurchasedTicket,
+      clearCartForArtist,
+      getCartForArtist,
+      getOrdersForArtist,
+      getTicketsForArtist,
+      paymentHistory,
+      paymentMethod,
+      setCartForArtist,
+      setPaymentMethod,
+      setPurchasedTickets,
+  } = useBilling();
+  const {
+      activeSection,
+      activeTicketTab,
+      fanAreaSection,
+      fanAreaViewTargetItemId,
+      setActiveSection,
+      setActiveTicketTab,
+      setFanAreaSection,
+      setFanAreaViewTargetItemId,
+      setStoreSection,
+      setStoreViewTargetItemId,
+      setSwitcherVisible,
+      storeSection,
+      storeViewTargetItemId,
+  } = useArtistSession();
   
   const [leaderboard, setLeaderboard] = useState<FanProfile[]>([]);
   
@@ -151,6 +166,9 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
   } | null>(null);
 
   const scrollPositionRef = useRef(0);
+  const shoppingCart = useMemo(() => getCartForArtist(artist.id), [artist.id, getCartForArtist]);
+  const orders = useMemo(() => getOrdersForArtist(artist.id), [artist.id, getOrdersForArtist]);
+  const purchasedTickets = useMemo(() => getTicketsForArtist(artist.id), [artist.id, getTicketsForArtist]);
 
   useEffect(() => {
     if (pointsModalData === null) {
@@ -395,7 +413,7 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
   }, [addFanPoints, posts, setPosts]);
 
   const handleAddToCart = useCallback((itemToAdd: CartItem) => {
-    setShoppingCart(prev => {
+    setCartForArtist(artist.id, prev => {
       const existingIndex = prev.findIndex(item =>
         item.id === itemToAdd.id &&
         item.selectedSize === itemToAdd.selectedSize &&
@@ -411,11 +429,11 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
         return [...prev, itemToAdd];
       }
     });
-  }, [setShoppingCart]);
+  }, [artist.id, setCartForArtist]);
 
   const handleUpdateCartQuantity = useCallback((itemId: string, newQuantity: number) => {
-    setShoppingCart(prev => newQuantity <= 0 ? prev.filter(item => item.id !== itemId) : prev.map(item => item.id === itemId ? { ...item, quantity: newQuantity } : item));
-  }, [setShoppingCart]);
+    setCartForArtist(artist.id, prev => newQuantity <= 0 ? prev.filter(item => item.id !== itemId) : prev.map(item => item.id === itemId ? { ...item, quantity: newQuantity } : item));
+  }, [artist.id, setCartForArtist]);
   
   const handlePurchaseSuccess = useCallback((purchaseDetails: { total: number; shippingCost: number; paymentMethod: 'credit-card' | 'pix' }) => {
     const pointsEarned = shoppingCart.reduce((total, item) => total + item.quantity, 0) * 50;
@@ -423,12 +441,14 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
     
     const newOrder: Order = {
         id: `SF-${Math.random().toString(36).substr(2, 9).toUpperCase()}`, date: new Date().toLocaleDateString('pt-BR'),
+        artistId: artist.id,
         status: OrderStatus.PROCESSING, items: [...shoppingCart], total: purchaseDetails.total, shippingCost: purchaseDetails.shippingCost,
     };
-    setOrders(prev => [newOrder, ...prev]);
+    addOrder(newOrder);
 
     const newPaymentRecord: PaymentRecord = {
         id: `PAY-${newOrder.id}`,
+        artistId: artist.id,
         date: newOrder.date,
         type: TransactionType.MERCH,
         title: `Pedido #${newOrder.id} (${artist.name})`,
@@ -441,13 +461,13 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
             amount: item.price * item.quantity
         }))
     };
-    onGlobalPaymentHistoryChange(prev => [newPaymentRecord, ...prev]);
+    addPaymentRecord(newPaymentRecord);
 
     setLastPurchaseDetails({ isPix: purchaseDetails.paymentMethod === 'pix', type: 'merch' });
-    setShoppingCart([]);
+    clearCartForArtist(artist.id);
     setIsCheckoutVisible(false);
     setIsPurchaseSuccessModalVisible(true);
-  }, [shoppingCart, setOrders, setShoppingCart, onGlobalPaymentHistoryChange, artist.name]);
+  }, [shoppingCart, artist.id, artist.name, addOrder, addPaymentRecord, clearCartForArtist]);
 
    const handlePurchaseTicketSuccess = useCallback((purchaseDetails: { event: Event, selections: TicketSelection[] }) => {
     const pointsEarned = purchaseDetails.selections.reduce((acc, s) => acc + s.quantity, 0) * 100;
@@ -456,37 +476,38 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
       purchaseId: `TKT-${Date.now()}`,
       alertSet: false,
     };
-    setPurchasedTickets(prev => [newTicket, ...prev]);
+    addPurchasedTicket(newTicket);
 
     const totalAmount = purchaseDetails.selections.reduce((acc, s) => acc + s.quantity * s.tier.price, 0);
     const newPaymentRecord: PaymentRecord = {
         id: `PAY-${newTicket.purchaseId}`,
+        artistId: artist.id,
         date: new Date().toLocaleDateString('pt-BR'),
         type: TransactionType.TICKET,
         title: `Ingresso: ${purchaseDetails.event.name}`,
         amount: totalAmount,
         status: 'Pago',
         invoiceUrl: '#',
-        paymentMethod: globalPaymentMethod === 'credit-card' ? 'Mastercard **** 1234' : 'Pix',
+        paymentMethod: paymentMethod === 'credit-card' ? 'Mastercard **** 1234' : 'Pix',
         items: purchaseDetails.selections.map(s => ({
             description: `${s.quantity}x ${s.tier.name}`,
             amount: s.quantity * s.tier.price
         }))
     };
-    onGlobalPaymentHistoryChange(prev => [newPaymentRecord, ...prev]);
+    addPaymentRecord(newPaymentRecord);
 
     const eventFanGroup = fanGroups.find(g => g.eventId === purchaseDetails.event.id) || undefined;
 
     setLastPurchasePoints(pointsEarned);
     setLastPurchaseDetails({
-        isPix: globalPaymentMethod === 'pix',
+        isPix: paymentMethod === 'pix',
         type: 'ticket',
         event: purchaseDetails.event,
         group: eventFanGroup
     });
     setTicketsToPurchase(null);
     setIsPurchaseSuccessModalVisible(true);
-  }, [globalPaymentMethod, fanGroups, setPurchasedTickets, onGlobalPaymentHistoryChange]);
+  }, [artist.id, paymentMethod, fanGroups, addPurchasedTicket, addPaymentRecord]);
 
   const handleExperiencePurchaseSuccess = useCallback((experience: ExperienceItem) => {
     const pointsEarned = 250;
@@ -494,23 +515,24 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
         ...experience,
         purchaseId: `EXP-${Date.now()}`
     };
-    setPurchasedExperiences(prev => [newPurchase, ...prev]);
+    addPurchasedExperience(newPurchase);
 
     const newPaymentRecord: PaymentRecord = {
         id: `PAY-${newPurchase.purchaseId}`,
+        artistId: artist.id,
         date: new Date().toLocaleDateString('pt-BR'),
         type: TransactionType.EXPERIENCE,
         title: `Experiência: ${experience.name}`,
         amount: experience.price,
         status: 'Pago',
         invoiceUrl: '#',
-        paymentMethod: globalPaymentMethod === 'credit-card' ? 'Mastercard **** 1234' : 'Pix',
+        paymentMethod: paymentMethod === 'credit-card' ? 'Mastercard **** 1234' : 'Pix',
         items: [{
             description: `1x ${experience.name}`,
             amount: experience.price
         }]
     };
-    onGlobalPaymentHistoryChange(prev => [newPaymentRecord, ...prev]);
+    addPaymentRecord(newPaymentRecord);
 
     setExperiences(prev => prev.map(exp => 
         exp.id === experience.id 
@@ -520,13 +542,13 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
     
     setLastPurchasePoints(pointsEarned);
     setLastPurchaseDetails({
-        isPix: globalPaymentMethod === 'pix',
+        isPix: paymentMethod === 'pix',
         type: 'experience',
         experience: experience
     });
     setExperienceToPurchase(null);
     setIsPurchaseSuccessModalVisible(true);
-  }, [globalPaymentMethod, setPurchasedExperiences, onGlobalPaymentHistoryChange, setExperiences]);
+  }, [artist.id, paymentMethod, addPurchasedExperience, addPaymentRecord, setExperiences]);
 
 
   const handleClosePurchaseSuccess = useCallback(() => {
@@ -573,23 +595,24 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
     
     const newPaymentRecord: PaymentRecord = {
         id: `PAY-AUC-${Date.now()}`,
+        artistId: artist.id,
         date: new Date().toLocaleDateString('pt-BR'),
         type: TransactionType.AUCTION,
         title: `Lance: ${auction.name}`,
         amount: bidAmount,
         status: 'Pago',
         invoiceUrl: '#',
-        paymentMethod: globalPaymentMethod === 'credit-card' ? 'Mastercard **** 1234' : 'Pix',
+        paymentMethod: paymentMethod === 'credit-card' ? 'Mastercard **** 1234' : 'Pix',
         items: [{
             description: `Lance no leilão para "${auction.name}"`,
             amount: bidAmount
         }]
     };
-    onGlobalPaymentHistoryChange(prev => [newPaymentRecord, ...prev]);
+    addPaymentRecord(newPaymentRecord);
 
     setAuctionToCheckout(null);
     setToastMessage('Seu lance foi confirmado com sucesso!');
-  }, [addFanPoints, setAuctions, globalPaymentMethod, onGlobalPaymentHistoryChange, userNickname]);
+  }, [artist.id, addFanPoints, setAuctions, paymentMethod, addPaymentRecord, userNickname]);
 
   const handleInitiateDonationCheckout = useCallback((campaign: VaquinhaCampaign, amount: number) => {
     setSelectedVaquinha(null);
@@ -616,23 +639,24 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
 
       const newPaymentRecord: PaymentRecord = {
           id: `PAY-DON-${Date.now()}`,
+          artistId: artist.id,
           date: new Date().toLocaleDateString('pt-BR'),
           type: TransactionType.DONATION,
           title: `Doação: ${campaign.title}`,
           amount: amount,
           status: 'Pago',
           invoiceUrl: '#',
-          paymentMethod: globalPaymentMethod === 'credit-card' ? 'Mastercard **** 1234' : 'Pix',
+          paymentMethod: paymentMethod === 'credit-card' ? 'Mastercard **** 1234' : 'Pix',
           items: [{
               description: `Doação para a campanha "${campaign.title}"`,
               amount: amount
           }]
       };
-      onGlobalPaymentHistoryChange(prev => [newPaymentRecord, ...prev]);
+      addPaymentRecord(newPaymentRecord);
       
       setDonationToCheckout(null);
       setToastMessage('Sua doação foi recebida! Muito obrigado!');
-  }, [addFanPoints, setVaquinhaCampaigns, setDonatedCampaigns, onGlobalPaymentHistoryChange, globalPaymentMethod]);
+  }, [artist.id, addFanPoints, setVaquinhaCampaigns, setDonatedCampaigns, addPaymentRecord, paymentMethod]);
 
   const handleAddMuralPost = useCallback((imageDataUrl: string, caption: string) => {
     const newPost: MuralPost = {
@@ -782,17 +806,18 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
   const totalCartItems = useMemo(() => shoppingCart.reduce((sum, item) => sum + item.quantity, 0), [shoppingCart]);
 
   return (
-    <div className="relative bg-gray-50 h-full">
-      <Header artist={artist} onSwitchArtist={onSwitchArtist} onViewImage={onViewImage} onOpenHelp={() => setHelpVisible(true)} />
+    <div className="relative bg-gray-50 h-full overflow-hidden flex flex-col">
+      <Header artist={artist} onSwitchArtist={() => setSwitcherVisible(true)} onViewImage={onViewImage} onOpenHelp={() => setHelpVisible(true)} />
       
-      <div 
-        className="h-48 bg-cover bg-center"
-        style={{ backgroundImage: `url(${artist.coverImageUrl})` }}
-      >
-        <div className="w-full h-full bg-gradient-to-t from-gray-50 to-transparent"></div>
-      </div>
-      
-      <main className="pb-32 -mt-6 relative px-0">
+      <main className="flex-1 overflow-y-auto no-scrollbar pb-40 relative px-0">
+        <div 
+          className="h-48 bg-cover bg-center"
+          style={{ backgroundImage: `url(${artist.coverImageUrl})` }}
+        >
+          <div className="w-full h-full bg-gradient-to-t from-gray-50 to-transparent"></div>
+        </div>
+
+        <div className="-mt-6 relative">
           <div style={{ display: activeSection === Section.TIMELINE ? 'block' : 'none' }}>
             {isLoadingPosts ? <LoadingSpinner /> : (
               <TimelineView 
@@ -820,8 +845,8 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
                 onInitiateTicketPurchase={setTicketsToPurchase}
                 onInitiateExperiencePurchase={setExperienceToPurchase}
                 onToggleTicketAlert={handleToggleTicketAlert}
-                paymentMethod={globalPaymentMethod}
-                onPaymentMethodChange={onGlobalPaymentMethodChange}
+                paymentMethod={paymentMethod}
+                onPaymentMethodChange={setPaymentMethod}
                 targetItemId={storeViewTargetItemId} onTargetItemHandled={() => setStoreViewTargetItemId(null)}
                 activeTicketTab={activeTicketTab} onTicketTabChange={setActiveTicketTab}
                 onShowToast={setToastMessage}
@@ -866,6 +891,7 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
              {isLoadingProfile ? <LoadingSpinner /> : (
               <ProfileView 
                 artist={artist}
+                fanPoints={fanPoints}
                 userNickname={userNickname}
                 userProfileImageUrl={userProfileImageUrl}
                 onProfileImageChange={onProfileImageChange}
@@ -878,6 +904,7 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
               />
              )}
           </div>
+        </div>
       </main>
         
       <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
@@ -890,22 +917,22 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
       <PaymentMethodModal
           isVisible={isPaymentMethodModalVisible}
           onClose={() => setPaymentMethodModalVisible(false)}
-          currentMethod={globalPaymentMethod}
-          onSelectMethod={onGlobalPaymentMethodChange}
+          currentMethod={paymentMethod}
+          onSelectMethod={setPaymentMethod}
       />
         <PaymentHistoryModal
           isVisible={isPaymentHistoryVisible}
           onClose={() => setPaymentHistoryVisible(false)}
-          history={globalPaymentHistory}
+          history={paymentHistory}
       />
 
       {pointsModalData && <PointsAwardedModal isVisible={true} points={pointsModalData.points} reason={pointsModalData.reason} onClose={() => setPointsModalData(null)} />}
-      {isCheckoutVisible && shoppingCart.length > 0 && <OneClickPurchase items={shoppingCart} onClose={() => setIsCheckoutVisible(false)} onSuccess={handlePurchaseSuccess} paymentMethod={globalPaymentMethod} onUpdateQuantity={handleUpdateCartQuantity} onEditAddress={() => setAddressModalVisible(true)} onEditPaymentMethod={() => setPaymentMethodModalVisible(true)} />}
+      {isCheckoutVisible && shoppingCart.length > 0 && <OneClickPurchase items={shoppingCart} onClose={() => setIsCheckoutVisible(false)} onSuccess={handlePurchaseSuccess} paymentMethod={paymentMethod} onUpdateQuantity={handleUpdateCartQuantity} onEditAddress={() => setAddressModalVisible(true)} onEditPaymentMethod={() => setPaymentMethodModalVisible(true)} />}
       {ticketsToPurchase && <TicketCheckoutModal 
                               purchaseDetails={ticketsToPurchase} 
                               onClose={() => setTicketsToPurchase(null)} 
                               onSuccess={handlePurchaseTicketSuccess} 
-                              paymentMethod={globalPaymentMethod}
+                              paymentMethod={paymentMethod}
                               onEditAddress={() => setAddressModalVisible(true)}
                               onEditPaymentMethod={() => setPaymentMethodModalVisible(true)}
                             />}
@@ -913,14 +940,14 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
                                   experience={experienceToPurchase}
                                   onClose={() => setExperienceToPurchase(null)}
                                   onSuccess={handleExperiencePurchaseSuccess}
-                                  paymentMethod={globalPaymentMethod}
+                                  paymentMethod={paymentMethod}
                                   onEditPaymentMethod={() => setPaymentMethodModalVisible(true)}
                               />}
       {isPurchaseSuccessModalVisible && lastPurchaseDetails && <PurchaseSuccessModal isVisible={isPurchaseSuccessModalVisible} details={lastPurchaseDetails} onClose={handleClosePurchaseSuccess} onGoToPurchases={() => { handleClosePurchaseSuccess(); setActiveSection(Section.STORE); setStoreSection(StoreSection.MY_PURCHASES); }} onGoToTickets={() => { handleClosePurchaseSuccess(); setActiveSection(Section.STORE); setStoreSection(StoreSection.TICKETS); setActiveTicketTab('my_tickets'); }} onGoToGroups={handleGoToGroups} />}
       {selectedPostForComments && <CommentModal post={selectedPostForComments} artist={artist} userProfileImageUrl={userProfileImageUrl} comments={comments} isLoading={isCommentsLoading} onClose={() => setSelectedPostForComments(null)} onAddComment={handleAddComment} onViewProfileImage={() => onViewImage({ url: artist.profileImageUrl })} />}
       {selectedOrderForTracking && <OrderStatusModal order={selectedOrderForTracking} onClose={() => setSelectedOrderForTracking(null)} />}
       {selectedAuctionForBidding && <AuctionBidModal item={selectedAuctionForBidding} onClose={() => setSelectedAuctionForBidding(null)} onConfirmBid={handleInitiateAuctionCheckout} />}
-      {auctionToCheckout && <AuctionCheckoutModal checkoutDetails={auctionToCheckout} onClose={() => setAuctionToCheckout(null)} onSuccess={handleAuctionPurchaseSuccess} paymentMethod={globalPaymentMethod} onEditPaymentMethod={() => setPaymentMethodModalVisible(true)} />}
+      {auctionToCheckout && <AuctionCheckoutModal checkoutDetails={auctionToCheckout} onClose={() => setAuctionToCheckout(null)} onSuccess={handleAuctionPurchaseSuccess} paymentMethod={paymentMethod} onEditPaymentMethod={() => setPaymentMethodModalVisible(true)} />}
       {selectedReward && <RewardDetailsModal reward={selectedReward} fanPoints={fanPoints} currentUserRank={leaderboard.find(f => f.isCurrentUser) ? leaderboard.findIndex(f => f.isCurrentUser) + 1 : null} leaderboard={leaderboard} onClose={() => setSelectedReward(null)} />}
       <VaquinhaDetailModal 
         campaign={selectedVaquinha}
@@ -931,7 +958,7 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
         checkoutDetails={donationToCheckout}
         onClose={() => setDonationToCheckout(null)}
         onSuccess={handleDonationSuccess}
-        paymentMethod={globalPaymentMethod}
+        paymentMethod={paymentMethod}
         onEditPaymentMethod={() => setPaymentMethodModalVisible(true)}
       />
       {playingMedia && <MediaPlayer item={playingMedia} onClose={() => setPlayingMedia(null)} />}
@@ -953,7 +980,7 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
       )}
       <HelpCenterModal isVisible={isHelpVisible} onClose={() => setHelpVisible(false)} context={helpContext} />
 
-      <div className="sticky bottom-0 z-40 pointer-events-none">
+      <div className="absolute bottom-0 left-0 right-0 z-[55] pointer-events-none">
         <div className="relative h-0">
           {totalCartItems > 0 && !isCheckoutVisible && activeSection === Section.STORE && (
             <FloatingCartButton itemCount={totalCartItems} onClick={() => setIsCheckoutVisible(true)} />
@@ -962,6 +989,16 @@ const ArtistPage: React.FC<ArtistPageProps> = ({
         <BottomNav activeSection={activeSection} onSectionChange={handleSectionChange} />
       </div>
     </div>
+  );
+};
+
+const ArtistPage: React.FC<ArtistPageProps> = (props) => {
+  const { artist } = props;
+
+  return (
+    <ArtistFanProvider artistId={artist.id} initialFanPoints={artist.fanPoints || 0}>
+      <ArtistPageContent {...props} />
+    </ArtistFanProvider>
   );
 };
 

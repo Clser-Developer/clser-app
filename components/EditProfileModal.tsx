@@ -22,8 +22,10 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isVisible, onClose,
       fullName, setFullName,
       nickname, setNickname,
       email, setEmail,
+      emailVerified, setEmailVerified,
       cpf, setCpf,
       phone, setPhone,
+      phoneVerified, setPhoneVerified,
       address, setAddress
   } = useGlobalUserState();
 
@@ -75,6 +77,12 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isVisible, onClose,
   }, [localAddress.cep]);
 
   const handleSave = () => {
+    if (localEmail !== email && emailVerified) {
+      setEmailVerified(false);
+    }
+    if ((localPhone.ddi !== phone.ddi || localPhone.number !== phone.number) && phoneVerified) {
+      setPhoneVerified(false);
+    }
     setFullName(localFullName);
     setNickname(localNickname);
     setEmail(localEmail);

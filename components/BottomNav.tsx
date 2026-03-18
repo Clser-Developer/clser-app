@@ -26,7 +26,7 @@ const NavItem: React.FC<{
 
 const BottomNav: React.FC<BottomNavProps> = ({ activeSection, onSectionChange }) => {
   return (
-    <nav className="sticky bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-around z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-safe">
+    <nav className="relative bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-around z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-safe pointer-events-auto">
       <NavItem 
         label="Feed" 
         iconName="timeline" 

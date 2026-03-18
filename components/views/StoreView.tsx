@@ -14,7 +14,7 @@ import PurchasedTicketDetailModal from '../PurchasedTicketDetailModal';
 import AlertConfigurationModal from '../AlertConfigurationModal';
 import ExperienceCard from '../ExperienceCard';
 import ExperienceDetailModal from '../ExperienceDetailModal';
-import { useGlobalUserState } from '../../hooks/useGlobalUserState';
+import { useBilling } from '../../contexts/BillingContext';
 
 // Componente Mastercard do Artista
 const MastercardBanner: React.FC<{ artist: Artist, hasCard: boolean, onGetCard: () => void }> = ({ artist, hasCard, onGetCard }) => {
@@ -185,6 +185,32 @@ const EmptyState: React.FC<{title: string, message: string}> = ({title, message}
   </div>
 );
 
+const InfoModal: React.FC<{ isVisible: boolean; message: string; onClose: () => void }> = ({ isVisible, message, onClose }) => {
+  if (!isVisible) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-end justify-center p-0 sm:p-4" aria-modal="true" role="dialog">
+      <div className="bg-white rounded-t-[2.5rem] sm:rounded-[2rem] w-full max-w-md shadow-2xl border border-gray-100 animate-slide-up overflow-hidden">
+        <div className="p-6 text-center">
+          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-gray-100">
+            <Icon name="lock-closed" className="w-8 h-8 text-gray-400" />
+          </div>
+          <h2 className="text-xl font-black text-gray-900">Solicitação indisponível</h2>
+          <p className="text-sm text-gray-500 mt-3 font-medium leading-relaxed">{message}</p>
+        </div>
+        <div className="p-6 pt-0">
+          <button
+            onClick={onClose}
+            className="w-full bg-gray-900 text-white font-black py-4 px-4 rounded-2xl hover:bg-black transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const StoreSubSection: React.FC<{title: string, onBack: () => void, children: React.ReactNode}> = ({ title, onBack, children }) => (
   <div className="p-4 animate-fade-in pb-24">
     <div className="flex items-center mb-6">
@@ -254,8 +280,9 @@ const StoreView: React.FC<StoreViewProps> = ({
     const [selectedPurchasedTicket, setSelectedPurchasedTicket] = useState<PurchasedTicket | null>(null);
     const [ticketSearchQuery, setTicketSearchQuery] = useState('');
     const [ticketForAlertConfig, setTicketForAlertConfig] = useState<PurchasedTicket | null>(null);
+    const [isCardRequestBlockedVisible, setCardRequestBlockedVisible] = useState(false);
 
-    const { hasCard, setHasCard } = useGlobalUserState();
+    const { hasCard } = useBilling();
 
     const filteredEvents = useMemo(() => {
         const sorted = [...events].sort((a, b) => {
@@ -308,12 +335,8 @@ const StoreView: React.FC<StoreViewProps> = ({
     };
 
     const handleGetCard = () => {
-        // Mock card acquisition logic
-        if(window.confirm(`Solicitar o Cartão Oficial ${artist.name} por R$ 19,90/mês?`)) {
-            setHasCard(true);
-            onShowToast("Cartão solicitado com sucesso!");
-        }
-    }
+        setCardRequestBlockedVisible(true);
+    };
 
     const renderContent = () => {
         switch(storeSection) {
@@ -498,6 +521,11 @@ const StoreView: React.FC<StoreViewProps> = ({
                 ticket={ticketForAlertConfig}
                 onClose={() => setTicketForAlertConfig(null)}
                 onSetAlert={handleSetAlertAndClose}
+            />
+            <InfoModal
+                isVisible={isCardRequestBlockedVisible}
+                message="Seu usuário não pode solicitar o cartão."
+                onClose={() => setCardRequestBlockedVisible(false)}
             />
             {renderContent()}
         </>
