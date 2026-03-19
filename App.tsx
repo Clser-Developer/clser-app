@@ -318,12 +318,13 @@ const AppContent = () => {
   const handleStartRegistration = () => {
       setSelectedArtistForAccess(null);
       setShowResumeScreen(false);
-      setFanModeStage('gateway');
       setIsOnboardingActive(true);
+      setFanModeStage('gateway');
   };
 
   const handleOpenLogin = () => {
       setShowResumeScreen(false);
+      setIsOnboardingActive(false);
       setFanModeStage('login');
   };
 
@@ -351,6 +352,7 @@ const AppContent = () => {
   const handleExploreArtists = () => {
       resetFanNavigation();
       setShowResumeScreen(false);
+      setIsOnboardingActive(false);
       setSelectedArtistForAccess(null);
       setFanModeStage('browse');
   };
@@ -399,6 +401,18 @@ const AppContent = () => {
 
     if (showResumeScreen) return <ResumeScreen />;
 
+    if (isOnboardingActive && !isAccountCreated) {
+        return (
+            <Onboarding 
+                artistId={selectedArtistForAccess?.id ?? 'account'} 
+                draft={onboardingDraft} 
+                onUpdateDraft={setOnboardingDraft} 
+                onComplete={handleOnboardingComplete}
+                onCancel={handleOnboardingCancel}
+            />
+        );
+    }
+
     if (fanModeStage === 'gateway') {
       return (
         <FanAccessScreen
@@ -421,6 +435,21 @@ const AppContent = () => {
       );
     }
 
+    if (fanModeStage === 'browse') {
+      return (
+          <ArtistShowcase 
+              artists={artistsForShowcase} 
+              onSelectArtist={(artist) => {
+                setSelectedArtistForAccess(artist);
+                if (!isAccountCreated) {
+                  setIsOnboardingActive(true);
+                }
+              }} 
+              onBack={lastViewedArtistId ? () => { setCurrentArtistId(lastViewedArtistId); setLastViewedArtistId(null); setFanModeStage('session'); } : () => setFanModeStage('gateway')} 
+          />
+      );
+    }
+
     if (currentArtist && subscribedArtists.length > 0 && fanModeStage === 'session') {
       return (
         <div className="bg-gray-50 text-gray-900 h-full">
@@ -439,18 +468,6 @@ const AppContent = () => {
       );
     }
 
-    if (isOnboardingActive && !isAccountCreated) {
-        return (
-            <Onboarding 
-                artistId={selectedArtistForAccess?.id ?? 'account'} 
-                draft={onboardingDraft} 
-                onUpdateDraft={setOnboardingDraft} 
-                onComplete={handleOnboardingComplete}
-                onCancel={handleOnboardingCancel}
-            />
-        );
-    }
-
     if (selectedArtistForAccess) {
         if (showPaymentSetup && !isSwitcherVisible) {
             return <PaymentSetupScreen artistName={selectedArtistForAccess.name} onSkip={finalizeAccess} onSaveCard={handlePaymentSetupSave} />;
@@ -466,18 +483,7 @@ const AppContent = () => {
         );
     }
 
-    return (
-        <ArtistShowcase 
-            artists={artistsForShowcase} 
-            onSelectArtist={(artist) => {
-              setSelectedArtistForAccess(artist);
-              if (!isAccountCreated) {
-                setIsOnboardingActive(true);
-              }
-            }} 
-            onBack={lastViewedArtistId ? () => { setCurrentArtistId(lastViewedArtistId); setLastViewedArtistId(null); setFanModeStage('session'); } : () => setFanModeStage('gateway')} 
-        />
-    );
+    return <ScreenLoader />;
   }
 
   return (
