@@ -14,19 +14,24 @@ const NavItem: React.FC<{
   isActive: boolean;
   onClick: () => void;
 }> = ({ label, iconName, isActive, onClick }) => {
-  const activeClasses = 'text-rose-600';
-  const inactiveClasses = 'text-gray-400 hover:text-gray-600';
   return (
-    <button onClick={onClick} className={`flex flex-col items-center justify-center w-1/5 pt-3 pb-2 transition-colors ${isActive ? activeClasses : inactiveClasses}`}>
-      <Icon name={iconName} className={`w-6 h-6 mb-1 transition-transform ${isActive ? 'scale-110' : ''}`} />
-      <span className="text-[10px] font-bold tracking-tight leading-tight">{label}</span>
+    <button
+      onClick={onClick}
+      className={`flex w-1/5 flex-col items-center justify-center rounded-2xl px-2 py-2 transition-all ${
+        isActive
+          ? 'bg-rose-50 text-rose-600 shadow-sm shadow-rose-200/50'
+          : 'text-gray-400 hover:bg-gray-50 hover:text-gray-700'
+      }`}
+    >
+      <Icon name={iconName} className={`mb-1 h-5 w-5 transition-transform ${isActive ? 'scale-110' : ''}`} />
+      <span className="text-[10px] font-black tracking-tight leading-tight">{label}</span>
     </button>
   );
 };
 
 const BottomNav: React.FC<BottomNavProps> = ({ activeSection, onSectionChange }) => {
   return (
-    <nav className="relative bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-around z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-safe pointer-events-auto">
+    <nav className="pointer-events-auto relative z-50 mx-4 mb-4 flex justify-around rounded-[2rem] border border-white/80 bg-white/92 p-2 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.38)] backdrop-blur-xl">
       <NavItem 
         label="Feed" 
         iconName="timeline" 

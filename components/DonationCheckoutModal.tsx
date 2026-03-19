@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { VaquinhaCampaign } from '../types';
 import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface DonationCheckoutModalProps {
   checkoutDetails: { campaign: VaquinhaCampaign; amount: number } | null;
@@ -48,15 +50,12 @@ const DonationCheckoutModal: React.FC<DonationCheckoutModalProps> = ({ checkoutD
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center" aria-modal="true" role="dialog">
-            <div className="bg-white rounded-t-[2.5rem] w-full max-w-md shadow-2xl border-t border-gray-100 animate-slide-up flex flex-col max-h-[95vh]">
-                <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-                    <h2 className="text-lg font-bold text-gray-900 ml-4">Finalizar Apoio</h2>
-                    <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
-                        <Icon name="close" className="w-6 h-6" />
-                    </button>
-                </div>
-                <div className="p-6 space-y-8 overflow-y-auto no-scrollbar">
+        <ModalShell open={!!checkoutDetails} onClose={onClose} variant="sheet" closeOnOverlayClick>
+                <ModalHeader>
+                    <ModalTitle className="ml-1">Finalizar Apoio</ModalTitle>
+                    <ModalCloseButton onClick={onClose} />
+                </ModalHeader>
+                <ModalBody className="space-y-8 overflow-y-auto no-scrollbar">
                     <div className="flex items-start space-x-4 pb-6 border-b border-gray-100">
                         <img src={campaign.imageUrl} alt={campaign.title} className="w-16 h-16 rounded-2xl object-cover flex-shrink-0 border border-gray-100 shadow-sm" />
                         <div className="flex-1 min-w-0">
@@ -81,19 +80,18 @@ const DonationCheckoutModal: React.FC<DonationCheckoutModalProps> = ({ checkoutD
                             </div>
                         </div>
                     </div>
-                </div>
+                </ModalBody>
 
-                <div className="p-6 bg-white border-t border-gray-100 pb-10">
-                    <button 
+                <ModalFooter className="pb-10">
+                    <Button
                         onClick={handleConfirm} 
                         disabled={isProcessing} 
-                        className="w-full bg-rose-500 text-white font-black py-4 px-4 rounded-2xl hover:bg-rose-600 transition-all disabled:bg-gray-200 flex items-center justify-center shadow-xl shadow-rose-500/20 active:scale-95"
+                        className="w-full rounded-2xl py-6 text-sm font-black flex items-center justify-center disabled:bg-gray-200"
                     >
                         {isProcessing ? <LoadingSpinner/> : (paymentMethod === 'pix' ? 'Gerar Pix de Apoio' : 'Confirmar Apoio')}
-                    </button>
-                </div>
-            </div>
-        </div>
+                    </Button>
+                </ModalFooter>
+        </ModalShell>
     );
 };
 export default DonationCheckoutModal;

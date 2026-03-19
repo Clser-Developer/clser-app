@@ -2,6 +2,8 @@
 import React from 'react';
 import { ExperienceItem } from '../types';
 import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface ExperienceDetailModalProps {
   experience: ExperienceItem | null;
@@ -28,15 +30,12 @@ const ExperienceDetailModal: React.FC<ExperienceDetailModalProps> = ({ experienc
   const isSoldOut = slotsLeft <= 0;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-end justify-center" aria-modal="true" role="dialog" onClick={onClose}>
-      <div className="bg-white rounded-t-[2.5rem] w-full max-w-lg shadow-2xl border-t border-gray-100 animate-slide-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-        <header className="p-4 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
-            <h2 className="text-lg font-bold text-gray-900 truncate ml-4">{experience.name}</h2>
-            <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
-                <Icon name="close" className="w-6 h-6" />
-            </button>
-        </header>
-        <main className="overflow-y-auto no-scrollbar p-6 space-y-8">
+    <ModalShell open={!!experience} onClose={onClose} variant="sheet" className="max-w-lg" closeOnOverlayClick>
+        <ModalHeader>
+            <ModalTitle className="truncate ml-1">{experience.name}</ModalTitle>
+            <ModalCloseButton onClick={onClose} />
+        </ModalHeader>
+        <ModalBody className="overflow-y-auto no-scrollbar space-y-8">
             <div className="aspect-video rounded-3xl overflow-hidden bg-gray-100 border border-gray-100 shadow-sm">
                 <img src={experience.imageUrl} alt={experience.name} className="w-full h-full object-cover" />
             </div>
@@ -64,24 +63,23 @@ const ExperienceDetailModal: React.FC<ExperienceDetailModalProps> = ({ experienc
                     ))}
                 </div>
             </div>
-        </main>
-        <footer className="p-6 bg-white border-t border-gray-100 flex-shrink-0 pb-24">
+        </ModalBody>
+        <ModalFooter className="pb-24">
           <div className="flex items-center justify-between">
             <div>
                 <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-0.5">Valor Único</p>
                 <p className="text-2xl font-black text-gray-900">R$ {experience.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
             </div>
-            <button 
+            <Button
                 onClick={() => onPurchase(experience)} 
                 disabled={isSoldOut}
-                className="bg-gray-900 text-white font-black py-4 px-8 rounded-2xl hover:bg-black transition-all disabled:bg-gray-200 shadow-xl active:scale-95"
+                className="rounded-2xl px-8 py-6 text-sm font-black disabled:bg-gray-200"
             >
                 {isSoldOut ? 'Esgotado' : 'Garantir Vaga'}
-            </button>
+            </Button>
           </div>
-        </footer>
-      </div>
-    </div>
+        </ModalFooter>
+    </ModalShell>
   );
 };
 

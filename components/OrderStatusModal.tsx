@@ -2,6 +2,7 @@
 import React from 'react';
 import { Order, OrderStatus, TrackingEvent } from '../types';
 import Icon from './Icon';
+import { ModalBody, ModalCloseButton, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface OrderStatusModalProps {
   order: Order;
@@ -73,18 +74,15 @@ const OrderStatusModal: React.FC<OrderStatusModalProps> = ({ order, onClose }) =
     const currentStepIndex = getStatusStepIndex(order.status);
     
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center" aria-modal="true" role="dialog">
-            <div className="bg-white rounded-t-[2.5rem] w-full max-w-lg shadow-2xl border-t border-gray-100 animate-slide-up flex flex-col max-h-[90vh]">
-                <header className="p-5 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
+        <ModalShell open={true} onClose={onClose} variant="sheet" className="max-w-lg" closeOnOverlayClick>
+                <ModalHeader className="p-5">
                     <div className="ml-4">
-                        <h2 className="text-lg font-black text-gray-900">Rastreio do Pedido</h2>
+                        <ModalTitle>Rastreio do Pedido</ModalTitle>
                         <p className="text-xs text-gray-400 font-mono font-bold">#{order.id}</p>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
-                        <Icon name="close" className="w-6 h-6" />
-                    </button>
-                </header>
-                <div className="p-6 overflow-y-auto no-scrollbar pb-12">
+                    <ModalCloseButton onClick={onClose} />
+                </ModalHeader>
+                <ModalBody className="overflow-y-auto no-scrollbar pb-12">
                     <div className="pl-2">
                         {statusSteps.map((step, index) => {
                              const isCompleted = index < currentStepIndex;
@@ -108,9 +106,8 @@ const OrderStatusModal: React.FC<OrderStatusModalProps> = ({ order, onClose }) =
                     {order.status !== OrderStatus.PROCESSING && order.trackingCode && order.trackingHistory && (
                         <TrackingHistory trackingCode={order.trackingCode} history={order.trackingHistory} />
                     )}
-                </div>
-            </div>
-        </div>
+                </ModalBody>
+        </ModalShell>
     );
 };
 

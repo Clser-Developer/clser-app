@@ -2,6 +2,8 @@
 import React, { useState, useMemo } from 'react';
 import { Event, TicketSelection } from '../types';
 import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface TicketCheckoutModalProps {
   purchaseDetails: { event: Event; selections: TicketSelection[] } | null;
@@ -54,15 +56,12 @@ const TicketCheckoutModal: React.FC<TicketCheckoutModalProps> = ({ purchaseDetai
     };
 
     return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center" aria-modal="true" role="dialog">
-      <div className="bg-white rounded-t-[2.5rem] w-full max-w-md shadow-2xl border-t border-gray-100 animate-slide-up flex flex-col max-h-[95vh]">
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-            <h2 className="text-lg font-bold text-gray-900 ml-4">Checkout de Ingressos</h2>
-            <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
-                <Icon name="close" className="w-6 h-6" />
-            </button>
-        </div>
-        <div className="p-6 space-y-6 overflow-y-auto no-scrollbar">
+    <ModalShell open={!!purchaseDetails} onClose={onClose} variant="sheet" closeOnOverlayClick>
+        <ModalHeader>
+            <ModalTitle className="ml-1">Checkout de Ingressos</ModalTitle>
+            <ModalCloseButton onClick={onClose} />
+        </ModalHeader>
+        <ModalBody className="space-y-6 overflow-y-auto no-scrollbar">
             <div className="flex items-start space-x-4 pb-6 border-b border-gray-100">
                 <img src={event.imageUrl} alt={event.name} className="w-16 h-20 rounded-2xl object-cover flex-shrink-0 border border-gray-100 shadow-sm" />
                 <div className="flex-1 min-w-0">
@@ -101,19 +100,18 @@ const TicketCheckoutModal: React.FC<TicketCheckoutModalProps> = ({ purchaseDetai
                 )}
                 </DetailRow>
             </div>
-        </div>
+        </ModalBody>
 
-        <div className="p-6 bg-white border-t border-gray-100 pb-10">
-            <button 
+        <ModalFooter className="pb-10">
+            <Button
                 onClick={handleConfirm} 
                 disabled={isProcessing} 
-                className="w-full bg-gray-900 text-white font-black py-4 px-4 rounded-2xl hover:bg-black transition-all disabled:bg-gray-200 shadow-xl active:scale-95 flex items-center justify-center"
+                className="w-full rounded-2xl py-6 text-sm font-black flex items-center justify-center disabled:bg-gray-200"
             >
                 {isProcessing ? <LoadingSpinner/> : (paymentMethod === 'pix' ? 'Gerar Pix do Ingresso' : 'Confirmar Reserva')}
-            </button>
-        </div>
-      </div>
-    </div>
+            </Button>
+        </ModalFooter>
+    </ModalShell>
   );
 };
 

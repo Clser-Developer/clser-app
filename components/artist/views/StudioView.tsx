@@ -2,6 +2,12 @@
 import React, { useState, useRef, ChangeEvent } from 'react';
 import Icon from '../../Icon';
 import { Artist, Post, PostType, MerchItem, Event, Section, StoreSection, FanAreaSection } from '../../../types';
+import { Button } from '../../ui/button';
+import { Card } from '../../ui/card';
+import { Input } from '../../ui/input';
+import { Select } from '../../ui/select';
+import { Tabs, TabsList, TabsTrigger } from '../../ui/tabs';
+import { Textarea } from '../../ui/textarea';
 
 interface StudioViewProps {
     artist: Artist;
@@ -140,32 +146,28 @@ const StudioView: React.FC<StudioViewProps> = ({ artist, onPostCreated, availabl
                 <p className="text-gray-500">Crie conteúdo e engaje sua comunidade.</p>
             </header>
 
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <Card className="overflow-hidden rounded-3xl border-gray-100 bg-white p-0 shadow-sm">
                 {/* Tabs */}
-                <div className="flex border-b border-gray-100">
-                    <button 
-                        onClick={() => setActiveTab('POST')}
-                        className={`flex-1 py-4 text-sm font-bold transition-colors flex items-center justify-center gap-2 ${activeTab === 'POST' ? 'bg-gray-50 text-rose-500 border-b-2 border-rose-500' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'}`}
-                    >
-                        <Icon name="pencil" className="w-4 h-4" /> Postagem
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('POLL')}
-                        className={`flex-1 py-4 text-sm font-bold transition-colors flex items-center justify-center gap-2 ${activeTab === 'POLL' ? 'bg-gray-50 text-rose-500 border-b-2 border-rose-500' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'}`}
-                    >
-                        <Icon name="chart-bar" className="w-4 h-4" /> Enquete
-                    </button>
-                </div>
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ContentTab)} className="gap-0">
+                    <TabsList className="grid h-auto w-full grid-cols-2 rounded-none border-b border-gray-100 bg-transparent p-0">
+                        <TabsTrigger value="POST" className="rounded-none py-4 text-sm font-bold data-[state=active]:border-b-2 data-[state=active]:border-rose-500 data-[state=active]:bg-gray-50 data-[state=active]:text-rose-500">
+                            <Icon name="pencil" className="mr-2 h-4 w-4" /> Postagem
+                        </TabsTrigger>
+                        <TabsTrigger value="POLL" className="rounded-none py-4 text-sm font-bold data-[state=active]:border-b-2 data-[state=active]:border-rose-500 data-[state=active]:bg-gray-50 data-[state=active]:text-rose-500">
+                            <Icon name="chart-bar" className="mr-2 h-4 w-4" /> Enquete
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
 
                 <div className="p-6">
                     <div className="flex items-start space-x-3 mb-6">
                         <img src={artist.profileImageUrl} alt={artist.name} className="w-10 h-10 rounded-full object-cover border border-gray-200" />
-                        <textarea
+                        <Textarea
                             value={postText}
                             onChange={(e) => setPostText(e.target.value)}
                             placeholder={activeTab === 'POLL' ? "Faça uma pergunta para os fãs..." : "O que está acontecendo, " + artist.name.split(' ')[0] + "?"}
                             rows={activeTab === 'POLL' ? 2 : 4}
-                            className="flex-1 bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 resize-none p-2 text-lg"
+                            className="min-h-0 flex-1 resize-none border-none bg-transparent p-2 text-lg text-gray-900 shadow-none focus-visible:ring-0"
                         />
                     </div>
 
@@ -174,27 +176,28 @@ const StudioView: React.FC<StudioViewProps> = ({ artist, onPostCreated, availabl
                         <div className="space-y-3 mb-6 pl-12">
                             {pollOptions.map((option, index) => (
                                 <div key={index} className="flex items-center gap-2">
-                                    <input
+                                    <Input
                                         type="text"
                                         value={option}
                                         onChange={(e) => handlePollOptionChange(index, e.target.value)}
                                         placeholder={`Opção ${index + 1}`}
-                                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-3 text-gray-900 focus:border-rose-500 focus:ring-rose-500 outline-none transition-shadow shadow-sm"
+                                        className="h-12 flex-1 rounded-xl border-gray-200 bg-gray-50 shadow-sm focus-visible:border-rose-300 focus-visible:ring-rose-500/25"
                                     />
                                     {pollOptions.length > 2 && (
-                                        <button onClick={() => handleRemovePollOption(index)} className="text-gray-400 hover:text-red-500 p-2">
+                                        <Button onClick={() => handleRemovePollOption(index)} variant="ghost" size="icon-sm" className="text-gray-400 hover:text-red-500">
                                             <Icon name="close" className="w-5 h-5" />
-                                        </button>
+                                        </Button>
                                     )}
                                 </div>
                             ))}
                             {pollOptions.length < 4 && (
-                                <button 
+                                <Button
                                     onClick={handleAddPollOption}
-                                    className="text-sm font-bold text-rose-500 hover:text-rose-600 flex items-center gap-2 mt-2 px-3 py-2 rounded-lg hover:bg-rose-50 transition-colors"
+                                    variant="ghost"
+                                    className="mt-2 justify-start px-3 py-2 text-sm font-bold text-rose-500 hover:bg-rose-50 hover:text-rose-600"
                                 >
-                                    <Icon name="plus" className="w-4 h-4" /> Adicionar opção
-                                </button>
+                                    <Icon name="plus" className="mr-2 h-4 w-4" /> Adicionar opção
+                                </Button>
                             )}
                         </div>
                     )}
@@ -217,29 +220,32 @@ const StudioView: React.FC<StudioViewProps> = ({ artist, onPostCreated, availabl
                         <div className="flex items-center justify-between mb-3">
                             <label className="text-xs font-bold text-gray-400 uppercase tracking-wide">Botão de Ação</label>
                             {linkType !== 'NONE' && (
-                                <button onClick={() => setLinkType('NONE')} className="text-xs font-bold text-red-500 hover:text-red-600 bg-red-50 px-2 py-1 rounded-md">Remover</button>
+                                <Button onClick={() => setLinkType('NONE')} variant="ghost" className="h-8 rounded-md bg-red-50 px-2 py-1 text-xs font-black text-red-500 hover:bg-red-100 hover:text-red-600">Remover</Button>
                             )}
                         </div>
                         
                         <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                            <button 
+                            <Button
                                 onClick={() => setLinkType('MERCH')}
-                                className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${linkType === 'MERCH' ? 'bg-rose-500 border-rose-500 text-white shadow-md' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'}`}
+                                variant={linkType === 'MERCH' ? 'default' : 'outline'}
+                                className={`rounded-full px-4 py-2 text-xs font-black whitespace-nowrap ${linkType === 'MERCH' ? 'shadow-md' : 'text-gray-500'}`}
                             >
                                 🛍️ Produto
-                            </button>
-                            <button 
+                            </Button>
+                            <Button
                                 onClick={() => setLinkType('TICKET')}
-                                className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${linkType === 'TICKET' ? 'bg-rose-500 border-rose-500 text-white shadow-md' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'}`}
+                                variant={linkType === 'TICKET' ? 'default' : 'outline'}
+                                className={`rounded-full px-4 py-2 text-xs font-black whitespace-nowrap ${linkType === 'TICKET' ? 'shadow-md' : 'text-gray-500'}`}
                             >
                                 🎟️ Ingresso
-                            </button>
-                            <button 
+                            </Button>
+                            <Button
                                 onClick={() => setLinkType('FAN_AREA')}
-                                className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${linkType === 'FAN_AREA' ? 'bg-rose-500 border-rose-500 text-white shadow-md' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'}`}
+                                variant={linkType === 'FAN_AREA' ? 'default' : 'outline'}
+                                className={`rounded-full px-4 py-2 text-xs font-black whitespace-nowrap ${linkType === 'FAN_AREA' ? 'shadow-md' : 'text-gray-500'}`}
                             >
                                 🏆 Área do Fã
-                            </button>
+                            </Button>
                         </div>
 
                         {/* Dynamic Link Inputs */}
@@ -247,21 +253,21 @@ const StudioView: React.FC<StudioViewProps> = ({ artist, onPostCreated, availabl
                             <div className="mt-4 bg-gray-50 p-4 rounded-xl space-y-3 animate-fade-in border border-gray-100">
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">Texto do Botão</label>
-                                    <input 
+                                    <Input
                                         type="text" 
                                         value={linkButtonText}
                                         onChange={(e) => setLinkButtonText(e.target.value)}
                                         placeholder={linkType === 'MERCH' ? "Ex: Comprar Agora" : linkType === 'TICKET' ? "Ex: Garantir Ingresso" : "Ex: Ver Ranking"}
-                                        className="w-full bg-white border border-gray-200 rounded-lg p-2 text-sm text-gray-900 focus:border-rose-500 focus:ring-rose-500 outline-none"
+                                        className="h-11 rounded-lg border-gray-200 bg-white text-sm shadow-sm focus-visible:border-rose-300 focus-visible:ring-rose-500/25"
                                     />
                                 </div>
                                 
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">Destino</label>
-                                    <select 
+                                    <Select
                                         value={selectedLinkId}
                                         onChange={(e) => setSelectedLinkId(e.target.value)}
-                                        className="w-full bg-white border border-gray-200 rounded-lg p-2 text-sm text-gray-900 focus:border-rose-500 focus:ring-rose-500 outline-none"
+                                        className="h-11 rounded-lg border-gray-200 bg-white text-sm shadow-sm focus-visible:border-rose-300 focus-visible:ring-rose-500/25"
                                     >
                                         <option value="">Selecione...</option>
                                         {linkType === 'MERCH' && availableMerch.map(item => (
@@ -278,7 +284,7 @@ const StudioView: React.FC<StudioViewProps> = ({ artist, onPostCreated, availabl
                                                 <option value={FanAreaSection.POLLS}>Enquetes</option>
                                             </>
                                         )}
-                                    </select>
+                                    </Select>
                                 </div>
                             </div>
                         )}
@@ -288,20 +294,22 @@ const StudioView: React.FC<StudioViewProps> = ({ artist, onPostCreated, availabl
                     <div className="flex justify-between items-center pt-2">
                         <div className="flex space-x-2">
                             {activeTab === 'POST' && (
-                                <button 
+                                <Button
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="p-3 text-rose-500 hover:bg-rose-50 rounded-full transition-colors bg-gray-50 border border-gray-100"
+                                    variant="outline"
+                                    size="icon-lg"
+                                    className="rounded-full border-gray-100 bg-gray-50 text-rose-500 hover:bg-rose-50"
                                     title="Adicionar Mídia"
                                 >
                                     <Icon name="camera" className="w-5 h-5" />
-                                </button>
+                                </Button>
                             )}
                         </div>
                         
-                        <button
+                        <Button
                             onClick={handlePost}
                             disabled={!isPostValid() || isPosting}
-                            className="bg-rose-500 text-white font-bold py-3 px-8 rounded-full hover:bg-rose-600 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center shadow-lg shadow-rose-500/30 hover:shadow-xl hover:-translate-y-0.5"
+                            className="rounded-full px-8 py-3 text-sm font-black shadow-lg shadow-rose-500/30 hover:-translate-y-0.5"
                         >
                             {isPosting ? (
                                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -311,7 +319,7 @@ const StudioView: React.FC<StudioViewProps> = ({ artist, onPostCreated, availabl
                                     <Icon name="send" className="w-4 h-4" />
                                 </>
                             )}
-                        </button>
+                        </Button>
                     </div>
                     <input 
                         type="file" 
@@ -321,7 +329,7 @@ const StudioView: React.FC<StudioViewProps> = ({ artist, onPostCreated, availabl
                         className="hidden" 
                     />
                 </div>
-            </div>
+            </Card>
         </div>
     );
 };

@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { CartItem } from '../types';
 import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface OneClickPurchaseProps {
   items: CartItem[];
@@ -64,15 +66,12 @@ const OneClickPurchase: React.FC<OneClickPurchaseProps> = ({ items, onClose, onS
     };
 
     return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-end justify-center" aria-modal="true" role="dialog">
-      <div className="bg-white rounded-t-[2.5rem] w-full max-w-md shadow-2xl animate-slide-up max-h-[90vh] flex flex-col">
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-            <h2 className="text-lg font-bold text-gray-900 ml-4">Checkout</h2>
-            <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
-                <Icon name="close" className="w-6 h-6" />
-            </button>
-        </div>
-        <div className="overflow-y-auto flex-1">
+    <ModalShell open={items.length > 0} onClose={onClose} variant="sheet" closeOnOverlayClick>
+        <ModalHeader>
+            <ModalTitle className="ml-1">Checkout</ModalTitle>
+            <ModalCloseButton onClick={onClose} />
+        </ModalHeader>
+        <ModalBody className="overflow-y-auto flex-1 p-0">
             <div className="p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Seu Pedido</h3>
                     <div className="max-h-64 overflow-y-auto pr-2 mb-6 divide-y divide-gray-100">
@@ -152,23 +151,24 @@ const OneClickPurchase: React.FC<OneClickPurchaseProps> = ({ items, onClose, onS
                     </div>
                 </div>
             </div>
-        </div>
+        </ModalBody>
 
-        <div className="p-4 bg-white border-t border-gray-100 grid grid-cols-2 gap-4 pb-24">
-            <button 
+        <ModalFooter className="grid grid-cols-2 gap-4 pb-24">
+            <Button
                 onClick={onClose} 
-                className="w-full bg-gray-100 text-gray-900 font-bold py-4 px-4 rounded-2xl hover:bg-gray-200 transition-colors focus:outline-none">
+                variant="secondary"
+                className="w-full rounded-2xl py-6 text-sm font-black text-gray-900">
                 Continuar Comprando
-            </button>
-            <button 
+            </Button>
+            <Button
                 onClick={handleConfirm} 
                 disabled={isProcessing} 
-                className="w-full bg-rose-500 text-white font-bold py-4 px-4 rounded-2xl hover:bg-rose-600 transition-transform hover:scale-105 transform-gpu disabled:bg-rose-300 disabled:cursor-not-allowed disabled:scale-100 flex justify-center items-center shadow-lg shadow-rose-500/30">
+                className="w-full rounded-2xl py-6 text-sm font-black flex justify-center items-center disabled:bg-rose-300 disabled:cursor-not-allowed"
+            >
                 {isProcessing ? <LoadingSpinner/> : (paymentMethod === 'pix' ? 'Gerar Pix' : 'Pagar Agora')}
-            </button>
-        </div>
-      </div>
-    </div>
+            </Button>
+        </ModalFooter>
+    </ModalShell>
   );
 };
 

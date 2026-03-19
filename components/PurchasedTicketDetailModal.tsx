@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { PurchasedTicket, Event } from '../types';
 import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 const Accordion: React.FC<{ title: string, children: React.ReactNode }> = ({ title, children }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -67,15 +69,12 @@ const PurchasedTicketDetailModal: React.FC<{
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ticket.fullAddress)}`;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-end justify-center" aria-modal="true" role="dialog" onClick={onClose}>
-      <div className="bg-white rounded-t-[2.5rem] w-full max-w-lg shadow-2xl border-t border-gray-100 animate-slide-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-        <header className="p-5 border-b border-gray-100 flex justify-between items-center flex-shrink-0 bg-white rounded-t-[2.5rem]">
-            <h2 className="text-lg font-black text-gray-900 truncate ml-4">{ticket.name}</h2>
-            <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100 transition-colors">
-                <Icon name="close" className="w-6 h-6" />
-            </button>
-        </header>
-        <main className="overflow-y-auto no-scrollbar p-6 space-y-6">
+    <ModalShell open={!!ticket} onClose={onClose} variant="sheet" className="max-w-lg" closeOnOverlayClick>
+        <ModalHeader className="bg-white">
+            <ModalTitle className="truncate ml-1">{ticket.name}</ModalTitle>
+            <ModalCloseButton onClick={onClose} />
+        </ModalHeader>
+        <ModalBody className="overflow-y-auto no-scrollbar space-y-6">
             <div className="aspect-video rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm relative">
                 <img src={ticket.imageUrl} alt={ticket.name} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
@@ -162,23 +161,23 @@ const PurchasedTicketDetailModal: React.FC<{
                 </div>
              </div>
 
-        </main>
-        <footer className="p-6 bg-white border-t border-gray-100 flex-shrink-0 grid grid-cols-2 gap-4 pb-24">
-            <button 
+        </ModalBody>
+        <ModalFooter className="grid grid-cols-2 gap-4 pb-24">
+            <Button
                 onClick={() => onBuyMoreTickets(ticket)}
-                className="w-full bg-gray-50 text-gray-600 font-bold py-4 px-4 rounded-2xl hover:bg-gray-100 transition-colors text-sm border border-gray-100 shadow-sm"
+                variant="secondary"
+                className="w-full rounded-2xl py-6 text-sm font-bold text-gray-600 border border-gray-100 shadow-sm"
             >
                 Comprar Mais
-            </button>
-             <button
+            </Button>
+             <Button
                 onClick={handleShowQrCode}
-                className="w-full bg-gray-900 text-white font-black py-4 px-4 rounded-2xl hover:bg-black transition-all text-sm shadow-xl active:scale-95"
+                className="w-full rounded-2xl py-6 text-sm font-black"
             >
                 Ver QR Code
-            </button>
-        </footer>
-      </div>
-    </div>
+            </Button>
+        </ModalFooter>
+    </ModalShell>
   );
 };
 

@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Artist } from '../types';
-import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface ArtistSwitcherProps {
   isVisible: boolean;
@@ -20,16 +21,13 @@ const ArtistSwitcher: React.FC<ArtistSwitcherProps> = ({ isVisible, onClose, art
   const modalTitle = hasArtists ? 'Meus Clubes' : 'Explorar Artistas';
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl border border-gray-100 overflow-hidden">
-        <div className="flex justify-between items-center p-5 border-b border-gray-50">
-          <h2 className="text-xl font-black text-gray-900">{modalTitle}</h2>
-          <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100 transition-colors">
-            <Icon name="close" className="w-6 h-6" />
-          </button>
-        </div>
+    <ModalShell open={isVisible} onClose={onClose} variant="dialog" className="max-w-sm overflow-hidden">
+      <ModalHeader className="p-5">
+        <ModalTitle className="text-xl">{modalTitle}</ModalTitle>
+        <ModalCloseButton onClick={onClose} />
+      </ModalHeader>
         
-        <div className="p-4">
+      <ModalBody className="p-4">
             {hasArtists ? (
                 <ul className="space-y-1 mb-4">
                 {artists.map((artist) => (
@@ -75,15 +73,14 @@ const ArtistSwitcher: React.FC<ArtistSwitcherProps> = ({ isVisible, onClose, art
                 </div>
             )}
             
-            <button
+            <Button
                 onClick={onFindMoreArtists}
-                className="w-full bg-gray-900 text-white font-bold py-4 px-4 rounded-2xl hover:bg-black transition-all shadow-lg"
+                className="w-full rounded-2xl py-6 text-sm font-black"
             >
                 Explorar Novos Artistas
-            </button>
-        </div>
-      </div>
-    </div>
+            </Button>
+      </ModalBody>
+    </ModalShell>
   );
 };
 

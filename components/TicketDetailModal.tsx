@@ -1,7 +1,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Event, TicketTier, TicketSelection } from '../types';
-import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface TicketDetailModalProps {
   event: Event | null;
@@ -75,15 +76,12 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({ event, onClose, o
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-end justify-center" aria-modal="true" role="dialog" onClick={onClose}>
-      <div className="bg-white rounded-t-[2.5rem] w-full max-w-lg shadow-2xl animate-slide-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-        <header className="p-4 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
-            <h2 className="text-lg font-bold text-gray-900 truncate ml-4">{event.name}</h2>
-            <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
-                <Icon name="close" className="w-6 h-6" />
-            </button>
-        </header>
-        <main className="overflow-y-auto no-scrollbar p-6 space-y-6">
+    <ModalShell open={!!event} onClose={onClose} variant="sheet" className="max-w-lg" closeOnOverlayClick>
+        <ModalHeader>
+            <ModalTitle className="truncate ml-1">{event.name}</ModalTitle>
+            <ModalCloseButton onClick={onClose} />
+        </ModalHeader>
+        <ModalBody className="overflow-y-auto no-scrollbar space-y-6">
             <div className="flex items-start space-x-5">
               <div className="text-center bg-rose-50 px-4 py-3 rounded-2xl flex-shrink-0 border border-rose-100">
                 <p className="text-3xl font-black text-rose-600 leading-tight">{event.date.split(' ')[0]}</p>
@@ -118,24 +116,23 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({ event, onClose, o
                     ))}
                  </div>
             </div>
-        </main>
-        <footer className="p-6 bg-white border-t border-gray-100 flex-shrink-0 pb-24">
+        </ModalBody>
+        <ModalFooter className="pb-24">
           <div className="flex items-center justify-between">
             <div>
                 <p className="text-gray-400 text-xs font-black uppercase tracking-widest mb-0.5">Total</p>
                 <p className="text-2xl font-black text-gray-900">R$ {total.toFixed(2).replace('.', ',')}</p>
             </div>
-            <button 
+            <Button
                 onClick={handleCheckoutClick} 
                 disabled={totalQuantity === 0}
-                className="bg-gray-900 text-white font-black py-4 px-8 rounded-2xl hover:bg-black transition-all disabled:bg-gray-200 disabled:text-gray-400 shadow-xl"
+                className="rounded-2xl px-8 py-6 text-sm font-black disabled:bg-gray-200 disabled:text-gray-400"
             >
                 Comprar ({totalQuantity})
-            </button>
+            </Button>
           </div>
-        </footer>
-      </div>
-    </div>
+        </ModalFooter>
+    </ModalShell>
   );
 };
 

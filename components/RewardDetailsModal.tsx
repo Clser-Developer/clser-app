@@ -2,6 +2,8 @@
 import React from 'react';
 import { ExclusiveReward, RewardType, FanProfile } from '../types';
 import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface RewardDetailsModalProps {
   reward: ExclusiveReward;
@@ -96,15 +98,12 @@ const RewardDetailsModal: React.FC<RewardDetailsModalProps> = ({ reward, fanPoin
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" aria-modal="true" role="dialog">
-            <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-gray-100 animate-scale-in flex flex-col max-h-[90vh]">
-                <header className="p-5 border-b border-gray-50 flex justify-between items-center flex-shrink-0">
-                    <h2 className="text-xl font-black text-gray-900">Recompensa</h2>
-                    <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
-                        <Icon name="close" className="w-6 h-6" />
-                    </button>
-                </header>
-                <div className="p-6 overflow-y-auto space-y-6 no-scrollbar">
+        <ModalShell open={true} onClose={onClose} variant="dialog" className="max-h-[90vh] max-w-md flex flex-col">
+            <ModalHeader className="p-5">
+                <ModalTitle className="text-xl">Recompensa</ModalTitle>
+                <ModalCloseButton onClick={onClose} />
+            </ModalHeader>
+            <ModalBody className="overflow-y-auto space-y-6 no-scrollbar">
                     <div className="relative rounded-2xl overflow-hidden aspect-video shadow-md">
                         <img src={reward.imageUrl} alt={reward.title} className="w-full h-full object-cover" />
                         <div className={`absolute top-3 left-3 px-3 py-1.5 text-[10px] font-black rounded-full shadow-lg ${typeMap[reward.type].color}`}>
@@ -125,17 +124,16 @@ const RewardDetailsModal: React.FC<RewardDetailsModalProps> = ({ reward, fanPoin
                     />
 
                     <EligibleFansList reward={reward} leaderboard={leaderboard} />
-                </div>
-                <footer className="p-5 bg-gray-50/50 flex-shrink-0 border-t border-gray-50">
-                    <button 
+            </ModalBody>
+            <ModalFooter className="bg-gray-50/50 p-5">
+                    <Button
                         onClick={onClose} 
-                        className="w-full bg-rose-500 text-white font-black py-4 px-4 rounded-2xl hover:bg-rose-600 shadow-lg shadow-rose-500/20"
+                        className="w-full rounded-2xl py-6 text-sm font-black"
                     >
                         {isEligible && reward.type === RewardType.OFFER ? 'Resgatar Agora' : 'Entendi!'}
-                    </button>
-                </footer>
-            </div>
-        </div>
+                    </Button>
+            </ModalFooter>
+        </ModalShell>
     );
 };
 

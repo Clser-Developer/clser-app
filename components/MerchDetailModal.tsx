@@ -2,6 +2,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { MerchItem, ColorOption, CartItem } from '../types';
 import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 const MerchDetailModal: React.FC<{
   item: MerchItem | null;
@@ -51,16 +53,13 @@ const MerchDetailModal: React.FC<{
     const isAddToCartDisabled = (needsSizeSelection && !selectedSize) || quantity <= 0;
     
     return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-end justify-center" aria-modal="true" role="dialog" onClick={onClose}>
-      <div className="bg-white rounded-t-[2.5rem] w-full max-w-lg shadow-2xl animate-slide-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-        <header className="p-4 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
-          <h2 className="text-lg font-bold text-gray-900 truncate ml-4">{item.name}</h2>
-          <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
-            <Icon name="close" className="w-6 h-6" />
-          </button>
-        </header>
+    <ModalShell open={!!item} onClose={onClose} variant="sheet" className="max-w-lg" closeOnOverlayClick>
+        <ModalHeader>
+          <ModalTitle className="truncate ml-1">{item.name}</ModalTitle>
+          <ModalCloseButton onClick={onClose} />
+        </ModalHeader>
 
-        <main className="p-4 overflow-y-auto no-scrollbar">
+        <ModalBody className="overflow-y-auto no-scrollbar p-4">
             <div className="mb-6">
                 <div className="aspect-square rounded-3xl overflow-hidden bg-gray-50 flex items-center justify-center border border-gray-100 shadow-sm">
                     <img src={mainImage} alt={item.name} className="w-full h-full object-cover" />
@@ -117,9 +116,9 @@ const MerchDetailModal: React.FC<{
                     </div>
                 )}
             </div>
-        </main>
+        </ModalBody>
 
-        <footer className="p-6 bg-white border-t border-gray-100 flex-shrink-0 pb-24">
+        <ModalFooter className="pb-24">
             <div className="flex items-center space-x-4">
                 {!item.isDigital && (
                      <div className="flex items-center bg-gray-50 p-1 rounded-xl border border-gray-100">
@@ -128,18 +127,17 @@ const MerchDetailModal: React.FC<{
                         <button onClick={() => setQuantity(q => q + 1)} className="w-10 h-10 rounded-lg text-gray-900 font-black text-xl hover:bg-white transition-colors">+</button>
                     </div>
                 )}
-                <button
+                <Button
                     onClick={handleAddToCartClick}
                     disabled={isAddToCartDisabled}
-                    className="flex-1 bg-gray-900 text-white font-black py-4 px-4 rounded-2xl hover:bg-black transition-all disabled:bg-gray-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-xl"
+                    className="flex-1 rounded-2xl py-6 text-sm font-black disabled:bg-gray-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                 >
                     <Icon name="shopping-cart" className="w-5 h-5" />
                     <span>{item.isDigital ? 'Baixar Agora' : 'Adicionar ao Carrinho'}</span>
-                </button>
+                </Button>
             </div>
-        </footer>
-      </div>
-    </div>
+        </ModalFooter>
+    </ModalShell>
     )
 }
 export default MerchDetailModal;

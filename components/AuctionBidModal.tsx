@@ -2,6 +2,8 @@
 import React from 'react';
 import { AuctionItem } from '../types';
 import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface AuctionBidModalProps {
   item: AuctionItem;
@@ -14,15 +16,12 @@ const AuctionBidModal: React.FC<AuctionBidModalProps> = ({ item, onClose, onConf
     const handleConfirm = () => onConfirmBid(item);
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-end justify-center" aria-modal="true" role="dialog">
-            <div className="bg-white rounded-t-[2.5rem] w-full max-w-md shadow-2xl border-t border-gray-100 animate-slide-up flex flex-col">
-                <header className="p-4 border-b border-gray-100 flex justify-between items-center">
-                    <h2 className="text-lg font-bold text-gray-900 ml-4">Confirmar Lance</h2>
-                    <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
-                        <Icon name="close" className="w-6 h-6" />
-                    </button>
-                </header>
-                <div className="p-6 space-y-8">
+        <ModalShell open={true} onClose={onClose} variant="sheet" closeOnOverlayClick>
+                <ModalHeader>
+                    <ModalTitle className="ml-1">Confirmar Lance</ModalTitle>
+                    <ModalCloseButton onClick={onClose} />
+                </ModalHeader>
+                <ModalBody className="space-y-8">
                     <div className="flex items-center space-x-5">
                         <img src={item.imageUrl} alt={item.name} className="w-24 h-24 rounded-2xl object-cover flex-shrink-0 border border-gray-100 shadow-sm" />
                         <div className="flex-1 min-w-0">
@@ -49,17 +48,16 @@ const AuctionBidModal: React.FC<AuctionBidModalProps> = ({ item, onClose, onConf
                             Ao confirmar, você se compromete com este lance se for o vencedor ao final do leilão. O valor só será debitado caso você ganhe.
                         </p>
                     </div>
-                </div>
-                <div className="p-6 bg-gray-50/50 pb-24 border-t border-gray-100">
-                    <button
+                </ModalBody>
+                <ModalFooter className="bg-gray-50/50 pb-24">
+                    <Button
                         onClick={handleConfirm}
-                        className="w-full bg-gray-900 text-white font-black py-4 px-4 rounded-2xl hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-95"
+                        className="w-full rounded-2xl py-6 text-sm font-black"
                     >
                         Confirmar e Continuar
-                    </button>
-                </div>
-            </div>
-        </div>
+                    </Button>
+                </ModalFooter>
+        </ModalShell>
     );
 };
 

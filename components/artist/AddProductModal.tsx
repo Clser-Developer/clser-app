@@ -2,6 +2,10 @@
 import React, { useState, useRef, ChangeEvent } from 'react';
 import { MerchItem } from '../../types';
 import Icon from '../Icon';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from '../ui/modal-shell';
+import { Textarea } from '../ui/textarea';
 
 interface AddProductModalProps {
   isVisible: boolean;
@@ -60,16 +64,13 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isVisible, onClose, o
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-end justify-center" aria-modal="true" role="dialog">
-      <div className="bg-white rounded-t-3xl w-full max-w-md shadow-2xl border-t border-gray-100 animate-slide-up flex flex-col max-h-[90vh]">
-        <header className="p-4 border-b border-gray-100 flex justify-between items-center">
-          <h2 className="text-lg font-bold text-gray-900">Adicionar Produto</h2>
-          <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
-            <Icon name="close" className="w-6 h-6" />
-          </button>
-        </header>
+    <ModalShell open={isVisible} onClose={onClose} variant="sheet">
+      <ModalHeader>
+        <ModalTitle>Adicionar Produto</ModalTitle>
+        <ModalCloseButton onClick={onClose} />
+      </ModalHeader>
 
-        <div className="p-6 space-y-4 overflow-y-auto">
+      <ModalBody className="space-y-4 overflow-y-auto">
             {/* Image Upload */}
             <div 
                 onClick={() => fileInputRef.current?.click()}
@@ -94,53 +95,52 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isVisible, onClose, o
             {/* Fields */}
             <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wide">Nome do Produto</label>
-                <input 
+                <Input
                     type="text" 
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ex: Camiseta Tour 2025"
-                    className="w-full bg-white border border-gray-200 rounded-xl p-3 text-gray-900 focus:border-rose-500 focus:ring-rose-500 outline-none transition-shadow shadow-sm placeholder-gray-400"
+                    className="h-12 rounded-xl border-gray-200 bg-white shadow-sm focus-visible:border-rose-300 focus-visible:ring-rose-500/25"
                 />
             </div>
 
             <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wide">Preço (R$)</label>
-                <input 
+                <Input
                     type="number" 
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     placeholder="0,00"
-                    className="w-full bg-white border border-gray-200 rounded-xl p-3 text-gray-900 focus:border-rose-500 focus:ring-rose-500 outline-none transition-shadow shadow-sm placeholder-gray-400"
+                    className="h-12 rounded-xl border-gray-200 bg-white shadow-sm focus-visible:border-rose-300 focus-visible:ring-rose-500/25"
                 />
             </div>
 
             <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wide">Descrição</label>
-                <textarea 
+                <Textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Detalhes do produto..."
                     rows={3}
-                    className="w-full bg-white border border-gray-200 rounded-xl p-3 text-gray-900 focus:border-rose-500 focus:ring-rose-500 outline-none resize-none transition-shadow shadow-sm placeholder-gray-400"
+                    className="min-h-24 rounded-xl border-gray-200 bg-white shadow-sm focus-visible:border-rose-300 focus-visible:ring-rose-500/25"
                 />
             </div>
-        </div>
+      </ModalBody>
 
-        <footer className="p-4 bg-white border-t border-gray-100 pb-8">
-          <button
+      <ModalFooter className="pb-8">
+          <Button
             onClick={handleSubmit}
             disabled={!name || !price || !image || isSaving}
-            className="w-full bg-rose-500 text-white font-bold py-4 px-4 rounded-2xl hover:bg-rose-600 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-rose-500/20"
+            className="h-14 w-full rounded-2xl text-sm font-black shadow-lg shadow-rose-500/20"
           >
             {isSaving ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
                 'Salvar Produto'
             )}
-          </button>
-        </footer>
-      </div>
-    </div>
+          </Button>
+      </ModalFooter>
+    </ModalShell>
   );
 };
 

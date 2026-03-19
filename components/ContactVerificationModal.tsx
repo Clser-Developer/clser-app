@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalDescription, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface ContactVerificationModalProps {
   isVisible: boolean;
@@ -45,21 +46,18 @@ const ContactVerificationModal: React.FC<ContactVerificationModalProps> = ({
     : 'Enviamos um codigo por SMS para confirmar este telefone na sua conta.';
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-end justify-center p-0 sm:p-4" aria-modal="true" role="dialog">
-      <div className="bg-white rounded-t-[2.5rem] sm:rounded-[2rem] w-full max-w-md shadow-2xl border border-gray-100 animate-slide-up overflow-hidden">
-        <header className="p-5 border-b border-gray-100 flex items-center justify-between">
+    <ModalShell open={isVisible} onClose={onClose} variant="sheet">
+      <ModalHeader className="px-5">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500">Conta Segura</p>
-            <h2 className="text-xl font-black text-gray-900 mt-1">{title}</h2>
+            <ModalTitle className="mt-1 text-xl">{title}</ModalTitle>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100 transition-colors">
-            <Icon name="close" className="w-6 h-6" />
-          </button>
-        </header>
+          <ModalCloseButton onClick={onClose} />
+      </ModalHeader>
 
-        <div className="p-6 space-y-6">
+      <ModalBody className="space-y-6">
           <div className="bg-gray-50 border border-gray-100 rounded-3xl p-5">
-            <p className="text-sm font-medium text-gray-500 leading-relaxed">{description}</p>
+            <ModalDescription className="text-gray-500">{description}</ModalDescription>
             <p className="text-sm font-black text-gray-900 mt-3 break-all">{value || 'Nenhum contato informado'}</p>
           </div>
 
@@ -86,19 +84,18 @@ const ContactVerificationModal: React.FC<ContactVerificationModalProps> = ({
             </button>
             <span className="text-gray-400 uppercase tracking-widest">Simulado</span>
           </div>
-        </div>
+      </ModalBody>
 
-        <footer className="p-6 pt-0">
-          <button
+      <ModalFooter className="border-t-0 pt-0">
+          <Button
             onClick={onVerified}
             disabled={!isValid}
-            className="w-full bg-gray-900 text-white font-black py-4 px-4 rounded-2xl hover:bg-black transition-all disabled:bg-gray-200 disabled:text-gray-400"
+            className="w-full rounded-2xl py-6 text-sm font-black disabled:bg-gray-200 disabled:text-gray-400"
           >
             Confirmar verificacao
-          </button>
-        </footer>
-      </div>
-    </div>
+          </Button>
+      </ModalFooter>
+    </ModalShell>
   );
 };
 

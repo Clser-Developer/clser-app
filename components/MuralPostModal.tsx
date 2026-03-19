@@ -1,6 +1,9 @@
 
 import React, { useState, useRef, ChangeEvent } from 'react';
 import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
+import { Textarea } from './ui/textarea';
 
 interface MuralPostModalProps {
   isVisible: boolean;
@@ -45,15 +48,12 @@ const MuralPostModal: React.FC<MuralPostModalProps> = ({ isVisible, onClose, onP
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-end justify-center" aria-modal="true" role="dialog">
-      <div className="bg-white rounded-t-[2.5rem] w-full max-w-md shadow-2xl border-t border-gray-100 animate-slide-up flex flex-col max-h-[90vh]">
-        <header className="p-5 border-b border-gray-50 flex justify-between items-center">
-          <h2 className="text-xl font-black text-gray-900">Novo Post</h2>
-          <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
-            <Icon name="close" className="w-6 h-6" />
-          </button>
-        </header>
-        <div className="p-6 space-y-6 overflow-y-auto no-scrollbar">
+    <ModalShell open={isVisible} onClose={onClose} variant="sheet">
+      <ModalHeader>
+        <ModalTitle>Novo Post</ModalTitle>
+        <ModalCloseButton onClick={onClose} />
+      </ModalHeader>
+      <ModalBody className="space-y-6 overflow-y-auto no-scrollbar">
           {previewUrl ? (
             <div className="relative rounded-2xl overflow-hidden shadow-lg border border-gray-100">
               <img src={previewUrl} alt="Preview" className="w-full h-auto max-h-80 object-contain bg-gray-50" />
@@ -85,31 +85,30 @@ const MuralPostModal: React.FC<MuralPostModalProps> = ({ isVisible, onClose, onP
           />
           <div>
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Legenda</label>
-            <textarea
+            <Textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Conta aí o que está rolando..."
               rows={4}
               maxLength={280}
-              className="w-full bg-gray-50 border-gray-100 border rounded-2xl p-4 text-gray-900 focus:ring-2 focus:ring-rose-500 outline-none resize-none font-medium text-sm shadow-inner"
+              className="min-h-28 rounded-2xl border-gray-100 bg-gray-50 p-4 text-sm font-medium shadow-inner focus-visible:border-rose-300 focus-visible:ring-rose-500/30"
             />
           </div>
-        </div>
-        <footer className="p-5 bg-gray-50/50 pb-10">
-          <button
+      </ModalBody>
+      <ModalFooter className="bg-gray-50/50 pb-10">
+          <Button
             onClick={handlePost}
             disabled={!previewUrl || !caption.trim() || isPosting}
-            className="w-full bg-rose-500 text-white font-black py-4 px-4 rounded-2xl hover:bg-rose-600 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-rose-500/20"
+            className="h-14 w-full rounded-2xl text-sm font-black shadow-lg shadow-rose-500/20"
           >
             {isPosting ? (
               <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
               'Publicar no Mural'
             )}
-          </button>
-        </footer>
-      </div>
-    </div>
+          </Button>
+      </ModalFooter>
+    </ModalShell>
   );
 };
 

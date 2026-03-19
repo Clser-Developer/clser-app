@@ -15,12 +15,17 @@ import AlertConfigurationModal from '../AlertConfigurationModal';
 import ExperienceCard from '../ExperienceCard';
 import ExperienceDetailModal from '../ExperienceDetailModal';
 import { useBilling } from '../../contexts/BillingContext';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Input } from '../ui/input';
+import { ModalBody, ModalFooter, ModalHeader, ModalShell, ModalTitle } from '../ui/modal-shell';
+import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 
 // Componente Mastercard do Artista
 const MastercardBanner: React.FC<{ artist: Artist, hasCard: boolean, onGetCard: () => void }> = ({ artist, hasCard, onGetCard }) => {
     if (hasCard) {
         return (
-            <div className="relative w-full aspect-[1.58] rounded-2xl overflow-hidden shadow-xl mb-6 transform transition-transform hover:scale-105">
+            <div className="relative mb-6 w-full aspect-[1.58] overflow-hidden rounded-[2rem] border border-white/10 shadow-[0_30px_60px_-32px_rgba(15,23,42,0.55)] transition-transform hover:scale-[1.01]">
                 {/* Background simulating holographic card */}
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black"></div>
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
@@ -55,8 +60,8 @@ const MastercardBanner: React.FC<{ artist: Artist, hasCard: boolean, onGetCard: 
     }
 
     return (
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-3xl p-1 shadow-lg mb-6 relative overflow-hidden group">
-            <div className="bg-white rounded-[20px] p-5 flex flex-col items-center text-center relative z-10">
+        <div className="group relative mb-6 overflow-hidden rounded-[2rem] border border-gray-200 bg-[linear-gradient(135deg,#111827,#1f2937)] p-1 shadow-[0_30px_60px_-34px_rgba(15,23,42,0.55)]">
+            <div className="relative z-10 flex flex-col items-center rounded-[1.6rem] bg-[linear-gradient(180deg,#ffffff,#fff7f7)] p-5 text-center">
                 {/* Imagem Oficial do Cartão solicitada pelo usuário */}
                 <div className="w-full mb-5 rounded-xl overflow-hidden shadow-md">
                     <img 
@@ -67,12 +72,12 @@ const MastercardBanner: React.FC<{ artist: Artist, hasCard: boolean, onGetCard: 
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-1">Cartão Oficial {artist.name}</h3>
                 <p className="text-gray-500 text-xs mb-5 max-w-[200px]">Descontos em ingressos, pré-vendas e pontos em dobro.</p>
-                <button 
+                <Button 
                     onClick={onGetCard}
-                    className="w-full bg-gray-900 text-white font-bold py-3 px-4 rounded-xl hover:bg-black transition-all shadow-md active:scale-95"
+                    className="h-12 w-full rounded-2xl font-black shadow-md transition-all active:scale-95"
                 >
                     Solicitar Cartão
-                </button>
+                </Button>
             </div>
         </div>
     );
@@ -85,7 +90,7 @@ const QRCodeModal: React.FC<{ ticket: PurchasedTicket | null; onClose: () => voi
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
-      <div className="bg-white rounded-3xl w-full max-w-sm text-center p-8 shadow-2xl animate-scale-in flex flex-col items-center" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-[2rem] w-full max-w-sm text-center p-8 shadow-2xl animate-scale-in flex flex-col items-center border border-gray-100" onClick={e => e.stopPropagation()}>
          <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:bg-gray-100">
             <Icon name="close" className="w-5 h-5" />
         </button>
@@ -154,13 +159,13 @@ const PurchasedTicketCard: React.FC<{ ticket: PurchasedTicket; onViewDetails: (t
 const MyTicketsView: React.FC<{ tickets: PurchasedTicket[]; onViewDetails: (ticket: PurchasedTicket) => void; onShowQr: (ticket: PurchasedTicket) => void; onConfigureAlert: (ticket: PurchasedTicket) => void; }> = ({ tickets, onViewDetails, onShowQr, onConfigureAlert }) => {
   if (tickets.length === 0) {
     return (
-      <div className="text-center py-16 px-4 bg-white rounded-3xl border border-gray-100 shadow-sm">
+      <Card className="gap-3 rounded-3xl border-gray-100 px-4 py-16 text-center shadow-sm">
         <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <Icon name="tickets" className="w-8 h-8 text-gray-300" />
         </div>
         <h3 className="text-lg font-bold text-gray-900">Você não tem ingressos</h3>
         <p className="text-gray-500 text-sm mt-1">Seus ingressos comprados aparecerão aqui.</p>
-      </div>
+      </Card>
     );
   }
   return (
@@ -179,49 +184,52 @@ const MyTicketsView: React.FC<{ tickets: PurchasedTicket[]; onViewDetails: (tick
 };
 
 const EmptyState: React.FC<{title: string, message: string}> = ({title, message}) => (
-  <div className="text-center py-16 px-4 bg-white rounded-3xl border border-gray-100 shadow-sm">
+  <Card className="gap-3 rounded-3xl border-gray-100 px-4 py-16 text-center shadow-sm">
     <h3 className="text-lg font-bold text-gray-900">{title}</h3>
     <p className="text-gray-500 text-sm mt-2">{message}</p>
-  </div>
+  </Card>
 );
 
 const InfoModal: React.FC<{ isVisible: boolean; message: string; onClose: () => void }> = ({ isVisible, message, onClose }) => {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-end justify-center p-0 sm:p-4" aria-modal="true" role="dialog">
-      <div className="bg-white rounded-t-[2.5rem] sm:rounded-[2rem] w-full max-w-md shadow-2xl border border-gray-100 animate-slide-up overflow-hidden">
-        <div className="p-6 text-center">
+    <ModalShell open={isVisible} onClose={onClose} variant="sheet">
+      <ModalHeader className="border-b-0 pb-0">
+        <ModalTitle className="sr-only">Solicitação indisponível</ModalTitle>
+      </ModalHeader>
+      <ModalBody className="pt-2 text-center">
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-gray-100">
             <Icon name="lock-closed" className="w-8 h-8 text-gray-400" />
           </div>
           <h2 className="text-xl font-black text-gray-900">Solicitação indisponível</h2>
           <p className="text-sm text-gray-500 mt-3 font-medium leading-relaxed">{message}</p>
-        </div>
-        <div className="p-6 pt-0">
-          <button
+      </ModalBody>
+      <ModalFooter className="pt-0">
+          <Button
             onClick={onClose}
-            className="w-full bg-gray-900 text-white font-black py-4 px-4 rounded-2xl hover:bg-black transition-colors"
+            className="h-14 w-full rounded-2xl font-black"
           >
             Fechar
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+      </ModalFooter>
+    </ModalShell>
   );
 };
 
 const StoreSubSection: React.FC<{title: string, onBack: () => void, children: React.ReactNode}> = ({ title, onBack, children }) => (
-  <div className="p-4 animate-fade-in pb-24">
+  <div className="animate-fade-in p-4 pb-24">
     <div className="flex items-center mb-6">
-      <button 
+      <Button
         onClick={onBack} 
-        className="p-2 rounded-full text-gray-400 hover:bg-gray-100 mr-2 transition-colors"
+        variant="outline"
+        size="icon-lg"
+        className="mr-2 rounded-2xl border-gray-200 bg-white text-gray-400 shadow-sm hover:bg-gray-50"
         aria-label="Voltar para a loja"
       >
         <Icon name="arrowLeft" className="w-6 h-6" />
-      </button>
-      <h2 className="text-2xl font-black text-gray-900">{title}</h2>
+      </Button>
+      <h2 className="text-2xl font-black text-gray-950">{title}</h2>
     </div>
     {children}
   </div>
@@ -229,10 +237,10 @@ const StoreSubSection: React.FC<{title: string, onBack: () => void, children: Re
 
 const ComingSoonView: React.FC<{title: string, onBack: () => void}> = ({title, onBack}) => (
   <StoreSubSection title={title} onBack={onBack}>
-    <div className="text-center py-16 px-4 bg-white rounded-3xl border border-gray-100 shadow-sm">
+    <Card className="gap-3 rounded-3xl border-gray-100 px-4 py-16 text-center shadow-sm">
       <h3 className="text-xl font-bold text-gray-900">Em Breve</h3>
       <p className="text-gray-500 mt-2">Esta seção está sendo preparada com carinho para você!</p>
-    </div>
+    </Card>
   </StoreSubSection>
 );
 
@@ -342,10 +350,11 @@ const StoreView: React.FC<StoreViewProps> = ({
         switch(storeSection) {
             case StoreSection.HOME:
                 return (
-                    <div className="p-4 animate-fade-in pb-24">
-                        <header className="mb-6">
-                            <h2 className="text-3xl font-black text-gray-900">Loja</h2>
-                            <p className="text-gray-500">Explore tudo que o universo de {artist.name} oferece.</p>
+                    <div className="animate-fade-in p-4 pb-24">
+                        <header className="mb-6 rounded-[2rem] border border-gray-100 bg-[linear-gradient(180deg,#ffffff,#fff8f8)] p-6 shadow-[0_20px_48px_-36px_rgba(244,63,94,0.35)]">
+                            <p className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-rose-500">Loja do artista</p>
+                            <h2 className="text-3xl font-black text-gray-950">Loja</h2>
+                            <p className="mt-2 text-gray-500">Explore tudo que o universo de {artist.name} oferece.</p>
                         </header>
                         
                         <MastercardBanner artist={artist} hasCard={hasCard} onGetCard={handleGetCard} />
@@ -380,12 +389,12 @@ const StoreView: React.FC<StoreViewProps> = ({
               case StoreSection.TICKETS:
                 return (
                     <StoreSubSection title="Ingressos" onBack={() => onSectionChange(StoreSection.HOME)}>
-                       <div className="mb-4">
-                          <div className="flex bg-white p-1 rounded-xl shadow-sm border border-gray-100">
-                              <button onClick={() => onTicketTabChange('available')} className={`w-1/2 py-2 text-sm font-bold rounded-lg transition-all ${activeTicketTab === 'available' ? 'bg-rose-500 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}>Disponíveis</button>
-                              <button onClick={() => onTicketTabChange('my_tickets')} className={`w-1/2 py-2 text-sm font-bold rounded-lg transition-all ${activeTicketTab === 'my_tickets' ? 'bg-rose-500 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}>Meus Ingressos</button>
-                          </div>
-                       </div>
+                       <Tabs value={activeTicketTab} onValueChange={(value) => onTicketTabChange(value as 'available' | 'my_tickets')} className="mb-4">
+                          <TabsList className="h-auto w-full rounded-2xl border border-gray-100 bg-white p-1 shadow-sm">
+                              <TabsTrigger value="available" className="rounded-xl py-2.5 text-sm font-black data-[state=active]:bg-rose-500 data-[state=active]:text-white data-[state=active]:shadow-md">Disponíveis</TabsTrigger>
+                              <TabsTrigger value="my_tickets" className="rounded-xl py-2.5 text-sm font-black data-[state=active]:bg-rose-500 data-[state=active]:text-white data-[state=active]:shadow-md">Meus Ingressos</TabsTrigger>
+                          </TabsList>
+                       </Tabs>
 
                        {activeTicketTab === 'available' ? (
                           <>
@@ -393,12 +402,12 @@ const StoreView: React.FC<StoreViewProps> = ({
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <Icon name="search" className="w-5 h-5 text-gray-400" />
                                 </div>
-                                <input
+                                <Input
                                     type="text"
                                     value={ticketSearchQuery}
                                     onChange={(e) => setTicketSearchQuery(e.target.value)}
                                     placeholder="Buscar por show, local ou data..."
-                                    className="w-full bg-white border border-gray-200 rounded-xl py-3 pl-10 pr-4 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition shadow-sm"
+                                    className="h-auto rounded-2xl border-gray-200 bg-white py-3 pl-10 pr-4 text-gray-900 placeholder-gray-400 shadow-sm"
                                 />
                             </div>
                              {filteredEvents.length > 0 ? (
@@ -462,22 +471,23 @@ const StoreView: React.FC<StoreViewProps> = ({
               case StoreSection.PPV:
                 return (
                     <StoreSubSection title="Pay Per View" onBack={() => onSectionChange(StoreSection.HOME)}>
-                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 text-center">
+                        <Card className="rounded-3xl border-gray-100 p-8 text-center shadow-sm">
                             <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <Icon name="play" className="w-10 h-10 text-rose-500" />
                             </div>
                             <h3 className="text-xl font-bold text-gray-900">Conteúdo Exclusivo</h3>
                             <p className="text-gray-500 mt-2 mb-6">Assista a shows completos, documentários e transmissões ao vivo adquirindo seu ingresso digital.</p>
-                            <button className="bg-rose-500 text-white font-bold py-3 px-6 rounded-xl hover:bg-rose-600 transition-colors shadow-md">Ver Catálogo</button>
-                        </div>
+                            <Button className="rounded-xl px-6 py-3 font-black shadow-md">Ver Catálogo</Button>
+                        </Card>
                     </StoreSubSection>
                 );
               default:
                 return (
-                    <div className="p-4 animate-fade-in">
-                        <header className="mb-6">
-                            <h2 className="text-3xl font-black text-gray-900">Loja</h2>
-                            <p className="text-gray-500">Explore tudo que o universo de {artist.name} oferece.</p>
+                    <div className="animate-fade-in p-4">
+                        <header className="mb-6 rounded-[2rem] border border-gray-100 bg-[linear-gradient(180deg,#ffffff,#fff8f8)] p-6 shadow-[0_20px_48px_-36px_rgba(244,63,94,0.35)]">
+                            <p className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-rose-500">Loja do artista</p>
+                            <h2 className="text-3xl font-black text-gray-950">Loja</h2>
+                            <p className="mt-2 text-gray-500">Explore tudo que o universo de {artist.name} oferece.</p>
                         </header>
                         
                         <MastercardBanner artist={artist} hasCard={hasCard} onGetCard={handleGetCard} />

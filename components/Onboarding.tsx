@@ -3,6 +3,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import Icon from './Icon';
 import { UserDemographics } from '../types';
 import { OnboardingDraft } from '../hooks/useGlobalUserState';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Select } from './ui/select';
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 
 interface OnboardingProps {
     onComplete: (details: { 
@@ -32,6 +36,11 @@ const ESTADOS_BRASIL = [
     { uf: 'RO', nome: 'Rondônia' }, { uf: 'RR', nome: 'Roraima' }, { uf: 'SC', nome: 'Santa Catarina' },
     { uf: 'SP', nome: 'São Paulo' }, { uf: 'SE', nome: 'Sergipe' }, { uf: 'TO', nome: 'Tocantins' }
 ];
+
+const onboardingInputClassName =
+    'h-14 rounded-2xl border-2 border-gray-100 bg-gray-50 px-5 text-base font-bold text-gray-900 shadow-sm focus-visible:border-rose-300 focus-visible:ring-rose-500/30 md:text-base';
+const onboardingLabelClassName =
+    'ml-2 block text-[10px] font-black uppercase tracking-widest text-gray-400';
 
 const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraft, artistId, onCancel }) => {
     // Machine States: 1 (Access), 1.5 (Confirm Phone), 2 (Primary OTP), 3 (Username & PWD), 4 (Secondary Contact), 5 (Secondary OTP), 6 (Personal Data), 7 (Photo), 8 (Review)
@@ -206,41 +215,41 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
                     <h1 className="text-3xl font-black mb-2 mt-8 leading-tight">Como deseja começar?</h1>
                     <p className="text-gray-500 mb-10 font-medium">Escolha sua forma de acesso principal.</p>
                     
-                    <div className="flex bg-gray-50 p-1 rounded-2xl mb-8 border border-gray-100">
-                        <button 
-                            onClick={() => setIdType('email')}
-                            className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${idType === 'email' ? 'bg-white text-rose-500 shadow-sm' : 'text-gray-400'}`}
-                        >
-                            E-mail
-                        </button>
-                        <button 
-                            onClick={() => setIdType('phone')}
-                            className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${idType === 'phone' ? 'bg-white text-rose-500 shadow-sm' : 'text-gray-400'}`}
-                        >
-                            Celular
-                        </button>
-                    </div>
+                    <Tabs
+                        value={idType}
+                        onValueChange={(value) => setIdType(value as 'email' | 'phone')}
+                        className="mb-8"
+                    >
+                        <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-gray-50 p-1.5 shadow-inner">
+                            <TabsTrigger value="email" className="rounded-xl text-xs font-black uppercase tracking-widest data-[state=active]:text-rose-500">
+                                E-mail
+                            </TabsTrigger>
+                            <TabsTrigger value="phone" className="rounded-xl text-xs font-black uppercase tracking-widest data-[state=active]:text-rose-500">
+                                Celular
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
 
                     <div className="space-y-4">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">
+                        <label className={onboardingLabelClassName}>
                             {idType === 'email' ? 'Seu melhor e-mail' : 'Número com DDD'}
                         </label>
-                        <input
+                        <Input
                             type={idType === 'email' ? 'email' : 'tel'}
                             value={identifier}
                             onChange={(e) => setIdentifier(e.target.value)}
                             placeholder={idType === 'email' ? 'exemplo@email.com' : '(00) 00000-0000'}
-                            className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-5 text-xl font-bold focus:ring-2 focus:ring-rose-500 outline-none transition-all"
+                            className={onboardingInputClassName}
                         />
                     </div>
 
-                    <button 
+                    <Button
                         onClick={handleNext}
                         disabled={idType === 'email' ? !identifier.includes('@') : identifier.length < 10}
-                        className="mt-auto mb-8 w-full bg-gray-900 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400"
+                        className="mt-auto mb-8 h-14 w-full rounded-2xl bg-gray-900 text-sm font-black text-white shadow-xl hover:bg-gray-900/95"
                     >
                         Continuar
-                    </button>
+                    </Button>
                 </div>
             )}
 
@@ -326,7 +335,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
                     <div className="space-y-6">
                         <div className="relative">
                             <span className="absolute left-5 top-1/2 -translate-y-1/2 text-xl font-black text-rose-500">@</span>
-                            <input
+                            <Input
                                 type="text"
                                 value={username.replace('@', '')}
                                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
@@ -369,12 +378,12 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
                                     <div className="relative">
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 mb-2">Defina uma senha</label>
                                         <div className="relative">
-                                            <input
+                                            <Input
                                                 type={showPassword ? "text" : "password"}
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 placeholder="Sua senha secreta"
-                                                className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-5 text-xl font-bold focus:ring-2 focus:ring-rose-500 outline-none pr-14"
+                                                className={`${onboardingInputClassName} pr-14`}
                                             />
                                             <button 
                                                 type="button"
@@ -389,12 +398,12 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
                                     <div className="relative">
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 mb-2">Confirme sua senha</label>
                                         <div className="relative">
-                                            <input
+                                            <Input
                                                 type={showConfirmPassword ? "text" : "password"}
                                                 value={confirmPassword}
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                                 placeholder="Repita a mesma senha"
-                                                className={`w-full bg-gray-50 border-2 rounded-2xl p-5 text-xl font-bold focus:ring-2 outline-none pr-14 transition-colors ${confirmPassword.length > 0 ? (passwordsMatch ? 'border-green-100 focus:ring-green-500' : 'border-rose-100 focus:ring-rose-500') : 'border-gray-100 focus:ring-rose-500'}`}
+                                                className={`${onboardingInputClassName} pr-14 transition-colors ${confirmPassword.length > 0 ? (passwordsMatch ? 'border-green-100 focus-visible:border-green-300 focus-visible:ring-green-500/30' : 'border-rose-100 focus-visible:border-rose-300 focus-visible:ring-rose-500/30') : ''}`}
                                             />
                                             <button 
                                                 type="button"
@@ -432,13 +441,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
                         )}
                     </div>
 
-                    <button 
+                    <Button
                         onClick={handleNext}
                         disabled={usernameStatus !== 'available' || !hasMinLength || !hasNumber || !passwordsMatch}
-                        className="mt-8 mb-8 w-full bg-gray-900 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400"
+                        className="mt-8 mb-8 h-14 w-full rounded-2xl bg-gray-900 text-sm font-black text-white shadow-xl hover:bg-gray-900/95"
                     >
                         Criar minha conta
-                    </button>
+                    </Button>
                 </div>
             )}
 
@@ -451,15 +460,15 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
                     </p>
 
                     <div className="space-y-4">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">
+                        <label className={onboardingLabelClassName}>
                              {secondaryIdentifierLabel}
                         </label>
-                        <input
+                        <Input
                             type={idType === 'email' ? 'tel' : 'email'}
                             value={backupId}
                             onChange={(e) => setBackupId(e.target.value)}
                             placeholder={secondaryIdentifierPlaceholder}
-                            className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-5 text-xl font-bold focus:ring-2 focus:ring-rose-500 outline-none transition-all"
+                            className={onboardingInputClassName}
                         />
                     </div>
 
@@ -467,13 +476,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
                         Esta etapa e obrigatoria para deixar sua conta associada a um e-mail e a um telefone verificados.
                     </p>
 
-                    <button 
+                    <Button
                         onClick={handleNext}
                         disabled={!secondaryIdentifierIsValid}
-                        className="mt-auto mb-8 w-full bg-gray-900 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400"
+                        className="mt-auto mb-8 h-14 w-full rounded-2xl bg-gray-900 text-sm font-black text-white shadow-xl hover:bg-gray-900/95"
                     >
                         Continuar verificacao
-                    </button>
+                    </Button>
                 </div>
             )}
 
@@ -530,33 +539,33 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
 
                     <div className="space-y-5">
                         <div>
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-2">Seu nome completo</label>
-                            <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Como está no seu documento" className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 font-bold outline-none shadow-sm focus:ring-2 focus:ring-rose-500" />
+                            <label className="mb-1.5 ml-2 block text-[10px] font-black uppercase tracking-widest text-gray-400">Seu nome completo</label>
+                            <Input type="text" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Como está no seu documento" className="h-12 rounded-2xl border-gray-100 bg-gray-50 font-bold shadow-sm focus-visible:border-rose-300 focus-visible:ring-rose-500/30" />
                         </div>
                         
                         <div className="grid grid-cols-3 gap-3">
                             <div className="col-span-1">
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-2">Estado (UF)</label>
-                                <select 
+                                <Select
                                     value={selectedState} 
                                     onChange={e => { setSelectedState(e.target.value); setCityQuery(''); setCity(''); }} 
-                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 font-bold outline-none shadow-sm focus:ring-2 focus:ring-rose-500 appearance-none"
+                                    className="h-12 rounded-2xl border-gray-100 bg-gray-50 font-bold shadow-sm focus-visible:border-rose-300 focus-visible:ring-rose-500/30"
                                 >
                                     <option value="">UF</option>
                                     {ESTADOS_BRASIL.map(e => <option key={e.uf} value={e.uf}>{e.uf}</option>)}
-                                </select>
+                                </Select>
                             </div>
                             <div className="col-span-2 relative" ref={cityInputRef}>
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-2">Cidade Atual</label>
                                 <div className="relative">
-                                    <input 
+                                    <Input
                                         type="text" 
                                         value={cityQuery} 
                                         disabled={!selectedState}
                                         onFocus={() => setShowCityDropdown(true)}
                                         onChange={e => { setCityQuery(e.target.value); setShowCityDropdown(true); }} 
                                         placeholder={selectedState ? "Digite sua cidade" : "Escolha a UF primeiro"} 
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 font-bold outline-none shadow-sm focus:ring-2 focus:ring-rose-500 disabled:opacity-50" 
+                                        className="h-12 rounded-2xl border-gray-100 bg-gray-50 font-bold shadow-sm focus-visible:border-rose-300 focus-visible:ring-rose-500/30 disabled:opacity-50" 
                                     />
                                     {isCitiesLoading && (
                                         <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -582,17 +591,17 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, draft, onUpdateDraf
 
                         <div>
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-2">Data de Nascimento</label>
-                            <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 font-bold outline-none shadow-sm focus:ring-2 focus:ring-rose-500" />
+                            <Input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} className="h-12 rounded-2xl border-gray-100 bg-gray-50 font-bold shadow-sm focus-visible:border-rose-300 focus-visible:ring-rose-500/30" />
                         </div>
                     </div>
 
-                    <button 
+                    <Button
                         onClick={handleNext}
                         disabled={!selectedState || !city || !birthDate || !fullName}
-                        className="mt-auto mb-8 w-full bg-gray-900 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all disabled:bg-gray-100 disabled:text-gray-300"
+                        className="mt-auto mb-8 h-14 w-full rounded-2xl bg-gray-900 text-sm font-black text-white shadow-xl hover:bg-gray-900/95"
                     >
                         Salvar e Continuar
-                    </button>
+                    </Button>
                 </div>
             )}
 

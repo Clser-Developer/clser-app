@@ -6,6 +6,9 @@ import EditProfileModal from './EditProfileModal';
 import { useBilling } from '../contexts/BillingContext';
 import { useGlobalUserState } from '../hooks/useGlobalUserState';
 import ContactVerificationModal from './ContactVerificationModal';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
 
 interface ProfileViewProps {
   artist: Artist;
@@ -22,43 +25,43 @@ interface ProfileViewProps {
 }
 
 const SettingsItem: React.FC<{ icon: string; title: string; subtitle?: string; onClick: () => void; }> = ({ icon, title, subtitle, onClick }) => (
-  <button onClick={onClick} className="w-full flex items-center text-left p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0">
-    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mr-4 text-gray-500">
+  <button onClick={onClick} className="group w-full flex items-center text-left px-5 py-4 hover:bg-gray-50/80 transition-colors border-b border-gray-100 last:border-0">
+    <div className="mr-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-50 text-gray-500 transition-colors group-hover:bg-rose-50 group-hover:text-rose-500">
       <Icon name={icon} className="w-5 h-5" />
     </div>
     <div className="flex-1">
-      <p className="font-semibold text-gray-900 text-sm">{title}</p>
+      <p className="text-sm font-black text-gray-900">{title}</p>
       {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
     </div>
-    <Icon name="chevron-right" className="w-5 h-5 text-gray-300" />
+    <Icon name="chevron-right" className="w-5 h-5 text-gray-300 transition-transform group-hover:translate-x-0.5" />
   </button>
 );
 
+const sectionCardClassName = 'rounded-[2rem] border border-gray-100 bg-white shadow-[0_18px_42px_-34px_rgba(15,23,42,0.32)]';
+
 const SummaryStat: React.FC<{ value: string; label: string }> = ({ value, label }) => (
-  <div className="bg-gray-50 p-4 rounded-2xl text-center border border-gray-100 shadow-sm">
-    <p className="text-xl font-black text-gray-900">{value}</p>
-    <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mt-1">{label}</p>
+  <div className="rounded-[1.75rem] border border-gray-100 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-4 text-center shadow-[0_12px_32px_-24px_rgba(15,23,42,0.45)]">
+    <p className="text-xl font-black text-gray-950">{value}</p>
+    <p className="mt-1 text-[11px] font-black uppercase tracking-[0.14em] text-gray-400">{label}</p>
   </div>
 );
 
 const VerificationPill: React.FC<{ label: string; verified: boolean; onClick?: () => void }> = ({ label, verified, onClick }) => {
-  const className = `inline-flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-bold ${verified ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`;
-
-  if (!onClick) {
-    return (
-      <div className={className}>
-        <div className={`w-2 h-2 rounded-full ${verified ? 'bg-green-500' : 'bg-amber-500'}`}></div>
-        <span>{label}</span>
-      </div>
-    );
-  }
-
-  return (
-    <button onClick={onClick} className={`${className} hover:brightness-95 transition-all`}>
-      <div className={`w-2 h-2 rounded-full ${verified ? 'bg-green-500' : 'bg-amber-500'}`}></div>
+  const badge = (
+    <Badge
+      variant="secondary"
+      className={`cursor-default gap-2 rounded-full px-3 py-1.5 text-xs font-black ${
+        verified ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+      }`}
+    >
+      <span className={`h-2 w-2 rounded-full ${verified ? 'bg-green-500' : 'bg-amber-500'}`}></span>
       <span>{label}</span>
-    </button>
+    </Badge>
   );
+
+  if (!onClick) return badge;
+
+  return <button onClick={onClick} className="transition-all hover:brightness-95">{badge}</button>;
 };
 
 const ProfileSummary: React.FC<{
@@ -87,7 +90,7 @@ const ProfileSummary: React.FC<{
     };
     
     return (
-        <div className="flex flex-col items-center text-center p-6 bg-white rounded-3xl shadow-sm border border-gray-100 mb-6 mx-4 mt-4">
+        <div className="mx-4 mt-4 mb-6 rounded-[2rem] border border-gray-100 bg-[linear-gradient(180deg,#ffffff,#fff8f8)] p-6 text-center shadow-[0_24px_60px_-40px_rgba(244,63,94,0.45)]">
             <div className="relative mb-4">
                 <button onClick={onViewImage} className="block rounded-full focus:outline-none focus:ring-4 focus:ring-rose-100">
                     <img
@@ -115,7 +118,7 @@ const ProfileSummary: React.FC<{
 
             <button 
                 onClick={onNavigateToFanArea}
-                className="mt-3 flex items-center space-x-2 bg-rose-50 px-4 py-1.5 rounded-full"
+                className="mt-3 inline-flex items-center space-x-2 rounded-full border border-rose-100 bg-rose-50 px-4 py-2 shadow-sm"
             >
                 <Icon name="users" className="w-4 h-4 text-rose-500" />
                 <span className="font-bold text-rose-600 text-sm">{fanPoints.toLocaleString('pt-BR')} Fan Points com {artistName}</span>
@@ -157,11 +160,11 @@ const ProfileView: React.FC<ProfileViewProps> = ({
           onEditProfile={() => openEditModal('personal')}
       />
       
-      <div className="px-4 space-y-6">
+      <div className="space-y-6 px-4">
         
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+        <Card className={`${sectionCardClassName} gap-0 p-5`}>
             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Conta Principal</h3>
-            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+            <div className="rounded-[1.75rem] border border-gray-100 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-4">
                 <div className="flex items-start justify-between gap-4">
                     <div>
                         <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">ID Interno</p>
@@ -187,9 +190,9 @@ const ProfileView: React.FC<ProfileViewProps> = ({
                     </div>
                 </div>
             </div>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className={`overflow-hidden ${sectionCardClassName}`}>
              <div className="p-4 pb-2">
                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Conta</h3>
              </div>
@@ -197,7 +200,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
              <SettingsItem icon="truck" title="Endereço Principal" subtitle="Dados usados para compras e entregas da sua conta" onClick={onEditAddress} />
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+        <Card className={`${sectionCardClassName} gap-0 p-5`}>
             <div className="flex items-start justify-between gap-3 mb-5">
                 <div>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Pagamento e Compras</h3>
@@ -218,9 +221,9 @@ const ProfileView: React.FC<ProfileViewProps> = ({
                     <span className="font-black text-gray-900">{paymentHistory.length}</span>
                 </div>
             </div>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className={`overflow-hidden ${sectionCardClassName}`}>
              <div className="p-4 pb-2">
                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Financeiro</h3>
              </div>
@@ -228,7 +231,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
              <SettingsItem icon="document-text" title="Histórico Financeiro" subtitle="Faturas, recibos e cobranças globais da conta" onClick={onOpenPaymentHistory} />
         </div>
 
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className={`overflow-hidden ${sectionCardClassName}`}>
              <div className="p-4 pb-2">
                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Sobre</h3>
              </div>
@@ -236,13 +239,14 @@ const ProfileView: React.FC<ProfileViewProps> = ({
              <SettingsItem icon="lock-closed" title="Política de Privacidade" onClick={handleUnimplemented} />
         </div>
         
-        <button
+        <Button
             onClick={onLogout}
-            className="w-full text-rose-500 font-bold py-3 px-4 rounded-xl hover:bg-rose-50 transition-colors flex items-center justify-center space-x-2"
+            variant="outline"
+            className="h-14 w-full rounded-2xl border-rose-100 bg-white font-black text-rose-500 shadow-sm hover:bg-rose-50 hover:text-rose-600"
         >
             <Icon name="logout" className="w-5 h-5" />
             <span>Sair da Conta</span>
-        </button>
+        </Button>
 
       </div>
     </div>

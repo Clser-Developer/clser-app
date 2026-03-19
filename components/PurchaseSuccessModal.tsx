@@ -2,6 +2,8 @@
 import React from 'react';
 import Icon from './Icon';
 import { Event, FanGroup, ExperienceItem } from '../types';
+import { Button } from './ui/button';
+import { ModalBody, ModalFooter, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface PurchaseSuccessDetails {
     isPix: boolean;
@@ -56,40 +58,44 @@ const PurchaseSuccessModal: React.FC<PurchaseSuccessModalProps> = ({
   const primaryActionText = isTicket ? 'Ver Meus Ingressos' : 'Ver Minhas Compras';
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in" aria-modal="true" role="dialog">
-      <div className="bg-white rounded-[2.5rem] w-full max-w-sm text-center p-8 shadow-2xl border border-gray-100 animate-scale-in flex flex-col items-center">
+    <ModalShell open={isVisible} onClose={onClose} variant="dialog" className="max-w-sm text-center">
+      <ModalBody className="flex flex-col items-center p-8">
         <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mb-6 border-4 border-green-100 shadow-inner">
           <Icon name="check-circle" className="w-12 h-12 text-green-500 stroke-[3]" />
         </div>
         
-        <h2 className="text-2xl font-black text-gray-900 mb-2 leading-tight">{title}</h2>
+        <ModalTitle className="mb-2 text-2xl leading-tight">{title}</ModalTitle>
         <p className="text-gray-500 mb-10 text-sm font-medium leading-relaxed">{message}</p>
-        
+
+      </ModalBody>
+      <ModalFooter className="border-t-0 px-8 pb-8 pt-0">
         <div className="w-full space-y-4">
-             <button
+             <Button
                 onClick={handlePrimaryAction}
-                className="w-full bg-rose-500 text-white font-black py-4 px-4 rounded-2xl hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 active:scale-95"
+                className="w-full rounded-2xl py-6 text-sm font-black"
             >
                 {primaryActionText}
-            </button>
+            </Button>
              {isTicket && details.group && (
-                <button
+                <Button
                     onClick={onGoToGroups}
-                    className="w-full bg-gray-900 text-white font-black py-4 px-4 rounded-2xl hover:bg-black transition-all flex items-center justify-center space-x-2 shadow-lg active:scale-95"
+                    variant="secondary"
+                    className="w-full rounded-2xl py-6 text-sm font-black text-gray-900 flex items-center justify-center space-x-2"
                 >
                     <Icon name="user-group" className="w-5 h-5" />
                     <span>Juntar-se ao Grupo de Fãs</span>
-                </button>
+                </Button>
             )}
-            <button
+            <Button
                 onClick={onClose}
-                className="w-full bg-transparent text-gray-400 font-bold py-2 px-4 rounded-xl hover:text-gray-600 transition-colors text-xs uppercase tracking-widest"
+                variant="ghost"
+                className="w-full rounded-xl py-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-600"
             >
                 Continuar Explorando
-            </button>
+            </Button>
         </div>
-      </div>
-    </div>
+      </ModalFooter>
+    </ModalShell>
   );
 };
 

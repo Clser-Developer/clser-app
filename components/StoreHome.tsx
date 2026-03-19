@@ -1,6 +1,7 @@
 import React from 'react';
 import { Artist, PlanType, StoreSection } from '../types';
 import Icon from './Icon';
+import { Badge } from './ui/badge';
 
 interface StoreHomeProps {
   artist: Artist;
@@ -19,15 +20,15 @@ interface CategoryCardProps {
 const StoreCategoryCard: React.FC<CategoryCardProps> = ({ icon, title, description, section, tag, onNavigate }) => (
     <button
         onClick={() => onNavigate(section)}
-        className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md hover:border-rose-100 transition-all duration-300 text-left flex flex-col group h-full"
+        className="group flex h-full flex-col rounded-[2rem] border border-gray-100 bg-white p-5 text-left shadow-[0_18px_40px_-34px_rgba(15,23,42,0.32)] transition-all duration-300 hover:-translate-y-0.5 hover:border-rose-100 hover:shadow-[0_24px_48px_-30px_rgba(244,63,94,0.22)]"
     >
         <div className="flex-grow flex flex-col">
             <div className="flex justify-between items-start">
-                <div className="bg-gray-50 p-3 rounded-2xl mb-4 group-hover:bg-rose-50 transition-colors">
+                <div className="mb-4 rounded-2xl bg-gray-50 p-3 transition-colors group-hover:bg-rose-50">
                     <Icon name={icon} className="w-6 h-6 text-gray-700 group-hover:text-rose-500 transition-colors" />
                 </div>
                 {tag && (
-                    <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{tag}</span>
+                    <Badge variant="secondary" className="bg-green-100 text-green-700 text-[10px] font-black">{tag}</Badge>
                 )}
             </div>
             <h3 className="text-lg font-bold text-gray-900 mb-1">{title}</h3>
@@ -39,7 +40,7 @@ const StoreCategoryCard: React.FC<CategoryCardProps> = ({ icon, title, descripti
 const MyPurchasesCard: React.FC<{ onNavigate: (section: StoreSection) => void }> = ({ onNavigate }) => (
     <button
         onClick={() => onNavigate(StoreSection.MY_PURCHASES)}
-        className="w-full bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-100 transition-all duration-300 text-left flex items-center space-x-4 group"
+        className="group flex w-full items-center space-x-4 rounded-[2rem] border border-gray-100 bg-[linear-gradient(135deg,#ffffff,#fff7ed)] p-5 text-left shadow-[0_22px_48px_-36px_rgba(249,115,22,0.35)] transition-all duration-300 hover:-translate-y-0.5 hover:border-orange-100"
     >
         <div className="bg-orange-50 p-3 rounded-2xl group-hover:bg-orange-100 transition-colors">
             <Icon name="box" className="w-8 h-8 text-orange-500" />

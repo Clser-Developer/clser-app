@@ -2,6 +2,8 @@
 import React, { useState, useMemo } from 'react';
 import { VaquinhaCampaign } from '../types';
 import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface VaquinhaDetailModalProps {
   campaign: VaquinhaCampaign | null;
@@ -44,16 +46,13 @@ const VaquinhaDetailModal: React.FC<VaquinhaDetailModalProps> = ({ campaign, onC
     };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-end justify-center" aria-modal="true" role="dialog" onClick={onClose}>
-      <div className="bg-white rounded-t-[2.5rem] w-full max-w-lg shadow-2xl border-t border-gray-100 animate-slide-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-        <header className="p-4 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
-          <h2 className="text-lg font-bold text-gray-900 truncate ml-4">{campaign.title}</h2>
-          <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
-            <Icon name="close" className="w-6 h-6" />
-          </button>
-        </header>
+    <ModalShell open={!!campaign} onClose={onClose} variant="sheet" className="max-w-lg" closeOnOverlayClick>
+        <ModalHeader>
+          <ModalTitle className="truncate ml-1">{campaign.title}</ModalTitle>
+          <ModalCloseButton onClick={onClose} />
+        </ModalHeader>
 
-        <main className="p-6 overflow-y-auto no-scrollbar space-y-6">
+        <ModalBody className="overflow-y-auto no-scrollbar space-y-6">
             <div className="aspect-video rounded-3xl overflow-hidden bg-gray-100 border border-gray-100 shadow-sm">
                 <img src={campaign.imageUrl} alt={campaign.title} className="w-full h-full object-cover" />
             </div>
@@ -103,20 +102,19 @@ const VaquinhaDetailModal: React.FC<VaquinhaDetailModalProps> = ({ campaign, onC
                     />
                  </div>
             </div>
-        </main>
+        </ModalBody>
 
-        <footer className="p-6 bg-white border-t border-gray-100 flex-shrink-0 pb-24">
-             <button
+        <ModalFooter className="pb-24">
+             <Button
                 onClick={handleDonateClick}
                 disabled={!finalAmount || finalAmount <= 0}
-                className="w-full bg-rose-500 text-white font-black py-4 px-4 rounded-2xl hover:bg-rose-600 transition-all disabled:bg-gray-200 disabled:text-gray-400 flex items-center justify-center space-x-2 shadow-xl shadow-rose-500/20 active:scale-95"
+                className="w-full rounded-2xl py-6 text-sm font-black disabled:bg-gray-200 disabled:text-gray-400 flex items-center justify-center space-x-2"
             >
                 <Icon name="like" className="w-5 h-5" />
                 <span>Apoiar com R$ {finalAmount?.toFixed(2).replace('.',',')}</span>
-            </button>
-        </footer>
-      </div>
-    </div>
+            </Button>
+        </ModalFooter>
+    </ModalShell>
   );
 };
 

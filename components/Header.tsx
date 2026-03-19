@@ -11,35 +11,38 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ artist, onSwitchArtist, onViewImage, onOpenHelp }) => {
   return (
-    <header className="bg-white/80 backdrop-blur-md sticky top-0 z-20 px-6 py-4 flex items-center justify-between border-b border-gray-100 shadow-sm">
-      <div className="flex items-center space-x-3">
+    <header className="sticky top-0 z-20 border-b border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.86))] px-5 py-4 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.55)] backdrop-blur-xl">
+      <div className="flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center space-x-3">
         <button 
           onClick={() => onViewImage({ url: artist.profileImageUrl })} 
           aria-label="Ver foto de perfil ampliada"
           className="rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500"
         >
-          <img src={artist.profileImageUrl} alt={artist.name} className="w-10 h-10 rounded-full border border-gray-200 object-cover shadow-sm transition-transform hover:scale-105" />
+          <img src={artist.profileImageUrl} alt={artist.name} className="h-11 w-11 rounded-full border border-white object-cover shadow-md shadow-black/10 transition-transform hover:scale-105" />
         </button>
-        <div>
-          <h1 className="text-lg font-bold text-gray-900 leading-tight">{artist.name}</h1>
-          <p className="text-[10px] font-bold text-rose-500 tracking-wide uppercase">Fã Clube Oficial</p>
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-rose-500">Clube oficial</p>
+          <h1 className="truncate text-lg font-black leading-tight text-gray-950">{artist.name}</h1>
         </div>
       </div>
       <div className="flex items-center space-x-2">
         <button 
           onClick={onOpenHelp}
-          className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          className="rounded-2xl border border-gray-200 bg-white p-2.5 text-gray-500 shadow-sm transition-colors hover:border-rose-200 hover:text-gray-900"
           aria-label="Central de Ajuda"
         >
-          <Icon name="question-mark-circle" className="w-6 h-6" />
+          <Icon name="question-mark-circle" className="h-5 w-5" />
         </button>
         <button 
           onClick={onSwitchArtist}
-          className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-2.5 text-gray-600 shadow-sm transition-colors hover:border-rose-200 hover:text-gray-900"
           aria-label="Trocar de artista"
         >
-          <Icon name="switch" className="w-6 h-6" />
+          <Icon name="switch" className="h-4 w-4" />
+          <span className="hidden text-[10px] font-black uppercase tracking-[0.18em] sm:inline">Trocar</span>
         </button>
+      </div>
       </div>
     </header>
   );
