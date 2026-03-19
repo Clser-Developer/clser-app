@@ -814,7 +814,7 @@ const ArtistPageContent: React.FC<ArtistPageProps> = ({
     <div className="relative min-h-[100dvh] bg-gray-50 overflow-hidden flex flex-col">
       <Header artist={artist} onSwitchArtist={() => setSwitcherVisible(true)} onViewImage={onViewImage} onOpenHelp={() => setHelpVisible(true)} />
       
-      <main ref={mainScrollRef} className="flex-1 overflow-y-auto no-scrollbar pb-40 relative px-0">
+      <main ref={mainScrollRef} className="flex-1 overflow-y-auto no-scrollbar pb-44 relative px-0">
         <div 
           className="h-48 bg-cover bg-center"
           style={{ backgroundImage: `url(${artist.coverImageUrl})` }}
@@ -985,7 +985,7 @@ const ArtistPageContent: React.FC<ArtistPageProps> = ({
       )}
       <HelpCenterModal isVisible={isHelpVisible} onClose={() => setHelpVisible(false)} context={helpContext} />
 
-      <div className="absolute bottom-0 left-0 right-0 z-[55] pointer-events-none">
+      <div className="fixed bottom-0 left-0 right-0 z-[55] pointer-events-none">
         <div className="relative h-0">
           {totalCartItems > 0 && !isCheckoutVisible && activeSection === Section.STORE && (
             <FloatingCartButton itemCount={totalCartItems} onClick={() => setIsCheckoutVisible(true)} />

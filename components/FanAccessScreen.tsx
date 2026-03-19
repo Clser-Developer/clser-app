@@ -1,12 +1,8 @@
 import React from 'react';
 import Icon from './Icon';
-import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 
 interface FanAccessScreenProps {
-  hasExistingAccount: boolean;
-  nickname?: string;
-  membershipsCount: number;
   onEnter: () => void;
   onRegister: () => void;
   onExploreArtists: () => void;
@@ -14,9 +10,6 @@ interface FanAccessScreenProps {
 }
 
 const FanAccessScreen: React.FC<FanAccessScreenProps> = ({
-  hasExistingAccount,
-  nickname,
-  membershipsCount,
   onEnter,
   onRegister,
   onExploreArtists,
@@ -54,51 +47,34 @@ const FanAccessScreen: React.FC<FanAccessScreenProps> = ({
         <div className="mt-auto pb-2">
           <div className="mx-auto max-w-sm rounded-[2rem] border border-white/15 bg-white/10 p-5 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.55)] backdrop-blur-xl">
             <p className="text-[11px] font-black uppercase tracking-[0.24em] text-white/65">Fan Access</p>
-            <h1 className="mt-3 text-4xl font-black tracking-tight text-white">Entrar</h1>
+            <h1 className="mt-3 text-4xl font-black tracking-tight text-white">Bem vindo ao Clser</h1>
             <p className="mt-2 text-sm leading-relaxed text-white/72">
-              Sua conta é única na Clser. Entre para acessar seus artistas, pedidos e vantagens da plataforma.
+              Cadastre-se para começar, ou entre, para continuar de onde parou.
             </p>
 
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              {hasExistingAccount ? (
-                <>
-                  <Badge className="rounded-full border border-white/10 bg-white/14 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white">
-                    Conta encontrada
-                  </Badge>
-                  <span className="text-xs font-medium text-white/72">
-                    {nickname ? `${nickname}` : 'Perfil salvo'}{membershipsCount > 0 ? ` • ${membershipsCount} artista${membershipsCount > 1 ? 's' : ''}` : ''}
-                  </span>
-                </>
-              ) : (
-                <Badge className="rounded-full border border-white/10 bg-white/14 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white">
-                  Primeiro acesso
-                </Badge>
-              )}
-            </div>
-
-            <div className="mt-6 space-y-3">
+            <div className="mt-8 space-y-3">
               <Button
-                onClick={onEnter}
+                onClick={onRegister}
                 className="h-12 w-full rounded-full bg-[linear-gradient(90deg,#ff8a1f,#ff5f44,#ff4d63)] text-sm font-black text-white shadow-[0_18px_36px_-20px_rgba(255,96,70,0.72)] hover:brightness-105"
               >
-                Entrar
+                Cadastrar
               </Button>
 
               <Button
-                onClick={onRegister}
+                onClick={onEnter}
                 variant="outline"
                 className="h-12 w-full rounded-full border-white/10 bg-white/10 text-sm font-black text-white backdrop-blur-sm hover:bg-white/16 hover:text-white"
               >
-                Cadastrar
+                Já tem uma conta? Entre
               </Button>
             </div>
 
             <div className="mt-5 text-center">
               <button
                 onClick={onExploreArtists}
-                className="text-xs font-bold text-white/78 underline-offset-4 transition-colors hover:text-white hover:underline"
+                className="text-[11px] font-medium text-white/58 transition-colors hover:text-white/82"
               >
-                Explorar artistas primeiro
+                Entrar sem login
               </button>
             </div>
           </div>

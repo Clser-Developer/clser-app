@@ -4,7 +4,7 @@ const SplashScreen: React.FC = () => {
   return (
     <div className="relative flex h-full min-h-screen items-center justify-center overflow-hidden bg-[#120c08]">
       <img
-        src="https://i.ibb.co/Z6twqyYQ/clser.jpg"
+        src="https://i.ibb.co/yFTNgGRP/fundo.png"
         alt="Clser splash"
         className="absolute inset-0 h-full w-full object-cover"
       />

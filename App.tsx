@@ -11,6 +11,7 @@ import PointsAwardedModal from './components/PointsAwardedModal';
 import ImageViewerModal from './components/ImageViewerModal';
 import DemoSelectionScreen from './components/DemoSelectionScreen';
 import FanAccessScreen from './components/FanAccessScreen';
+import FanLoginScreen from './components/FanLoginScreen';
 import Icon from './components/Icon';
 import SplashScreen from './components/SplashScreen';
 
@@ -38,7 +39,7 @@ export interface BillingData {
 }
 
 type AppMode = 'selection' | 'fan' | 'artist';
-type FanModeStage = 'gateway' | 'browse' | 'session';
+type FanModeStage = 'gateway' | 'login' | 'browse' | 'session';
 const ARTIST_MEMBERSHIPS_STORAGE_KEY = 'artistMemberships';
 const LEGACY_SUBSCRIBED_ARTISTS_STORAGE_KEY = 'subscribedArtists';
 
@@ -316,8 +317,14 @@ const AppContent = () => {
 
   const handleStartRegistration = () => {
       setSelectedArtistForAccess(null);
-      setFanModeStage('browse');
+      setShowResumeScreen(false);
+      setFanModeStage('gateway');
       setIsOnboardingActive(true);
+  };
+
+  const handleOpenLogin = () => {
+      setShowResumeScreen(false);
+      setFanModeStage('login');
   };
 
   const handleEnterExistingAccount = () => {
@@ -343,6 +350,7 @@ const AppContent = () => {
 
   const handleExploreArtists = () => {
       resetFanNavigation();
+      setShowResumeScreen(false);
       setSelectedArtistForAccess(null);
       setFanModeStage('browse');
   };
@@ -350,9 +358,13 @@ const AppContent = () => {
   const handleOnboardingCancel = () => {
       setIsOnboardingActive(false);
 
-      if (!selectedArtistForAccess) {
-          setFanModeStage('gateway');
+      if (selectedArtistForAccess && !isAccountCreated) {
+          setSelectedArtistForAccess(null);
+          setFanModeStage('browse');
+          return;
       }
+
+      setFanModeStage('gateway');
   };
 
   const ResumeScreen = () => (
@@ -390,13 +402,21 @@ const AppContent = () => {
     if (fanModeStage === 'gateway') {
       return (
         <FanAccessScreen
-          hasExistingAccount={isAccountCreated}
-          nickname={nickname}
-          membershipsCount={artistMemberships.length}
-          onEnter={handleEnterExistingAccount}
+          onEnter={handleOpenLogin}
           onRegister={handleStartRegistration}
           onExploreArtists={handleExploreArtists}
           onBack={handleLogout}
+        />
+      );
+    }
+
+    if (fanModeStage === 'login') {
+      return (
+        <FanLoginScreen
+          hasExistingAccount={isAccountCreated}
+          defaultEmail={email}
+          onSubmit={handleEnterExistingAccount}
+          onBack={() => setFanModeStage('gateway')}
         />
       );
     }
@@ -449,7 +469,12 @@ const AppContent = () => {
     return (
         <ArtistShowcase 
             artists={artistsForShowcase} 
-            onSelectArtist={setSelectedArtistForAccess} 
+            onSelectArtist={(artist) => {
+              setSelectedArtistForAccess(artist);
+              if (!isAccountCreated) {
+                setIsOnboardingActive(true);
+              }
+            }} 
             onBack={lastViewedArtistId ? () => { setCurrentArtistId(lastViewedArtistId); setLastViewedArtistId(null); setFanModeStage('session'); } : () => setFanModeStage('gateway')} 
         />
     );

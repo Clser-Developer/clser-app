@@ -19,25 +19,25 @@ const PointsAwardedModal: React.FC<PointsAwardedModalProps> = ({
   if (!isVisible) return null;
 
   return (
-    <ModalShell open={isVisible} onClose={onClose} variant="dialog" className="max-w-sm text-center">
-      <ModalBody className="flex flex-col items-center p-8">
-        <div className="w-24 h-24 bg-rose-50 rounded-full flex items-center justify-center mb-6 border-4 border-rose-100 shadow-inner">
-            <span className="text-5xl animate-pulse">✨</span>
+    <ModalShell open={isVisible} onClose={onClose} variant="dialog" className="max-w-[22rem] text-center">
+      <ModalBody className="flex flex-col items-center px-6 pb-4 pt-6">
+        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border-4 border-rose-100 bg-rose-50 shadow-inner">
+            <span className="text-4xl animate-pulse">✨</span>
         </div>
         
-        <ModalTitle className="mb-2 text-2xl">Você ganhou pontos!</ModalTitle>
-        <p className="text-gray-500 mb-8 font-medium text-sm leading-relaxed">{reason}</p>
+        <ModalTitle className="mb-1 text-[1.75rem] leading-none">Você ganhou pontos!</ModalTitle>
+        <p className="mb-5 text-sm font-medium leading-relaxed text-gray-500">{reason}</p>
         
-        <div className="bg-gray-50 rounded-2xl p-6 w-full mb-8 border border-gray-100">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Fan Points Acumulados</p>
-            <p className="text-4xl font-black text-rose-500">+{points}</p>
+        <div className="mb-5 w-full rounded-[1.5rem] border border-gray-100 bg-gray-50 px-5 py-4 shadow-inner">
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.22em] text-gray-400">Fan Points Acumulados</p>
+            <p className="text-[2.25rem] font-black leading-none text-rose-500">+{points}</p>
         </div>
 
       </ModalBody>
-      <ModalFooter className="border-t-0 px-8 pb-8 pt-0">
+      <ModalFooter className="border-t-0 bg-background px-6 pb-6 pt-0">
         <Button
             onClick={onClose}
-            className="w-full rounded-2xl py-6 text-sm font-black"
+            className="h-12 w-full rounded-2xl text-sm font-black"
         >
             Incrível!
         </Button>

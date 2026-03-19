@@ -17,7 +17,7 @@ interface ModalShellProps {
 
 const variantClasses: Record<ModalVariant, string> = {
   dialog:
-    "w-full max-w-md rounded-[2rem] border border-border bg-background shadow-2xl animate-scale-in",
+    "w-full max-w-md overflow-hidden rounded-[2rem] border border-border bg-background shadow-2xl animate-scale-in",
   sheet:
     "flex w-full max-w-md flex-col overflow-hidden rounded-t-[2.5rem] border border-border bg-background shadow-2xl animate-slide-up sm:rounded-[2rem] max-h-[92vh]",
   fullscreen:
@@ -59,6 +59,7 @@ export function ModalShell({
       onClick={handleOverlayClick}
     >
       <div
+        data-modal-variant={variant}
         className={cn(variantClasses[variant], className)}
         onClick={(event) => event.stopPropagation()}
       >
@@ -75,7 +76,7 @@ export function ModalHeader({
   return (
     <header
       className={cn(
-        "flex items-center justify-between border-b border-border px-5 py-4 shrink-0",
+        "modal-header flex items-center justify-between border-b border-border px-5 py-4 shrink-0",
         className
       )}
     >
@@ -130,7 +131,7 @@ export function ModalBody({
   className,
   children,
 }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("px-6 py-5", className)}>{children}</div>;
+  return <div className={cn("modal-body px-6 py-5", className)}>{children}</div>;
 }
 
 export function ModalFooter({
@@ -140,7 +141,7 @@ export function ModalFooter({
   return (
     <footer
       className={cn(
-        "shrink-0 border-t border-border bg-background px-6 py-5",
+        "modal-footer shrink-0 border-t border-border bg-background px-6 py-5",
         className
       )}
     >
