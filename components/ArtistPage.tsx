@@ -166,29 +166,34 @@ const ArtistPageContent: React.FC<ArtistPageProps> = ({
   } | null>(null);
 
   const scrollPositionRef = useRef(0);
+  const mainScrollRef = useRef<HTMLElement | null>(null);
   const shoppingCart = useMemo(() => getCartForArtist(artist.id), [artist.id, getCartForArtist]);
   const orders = useMemo(() => getOrdersForArtist(artist.id), [artist.id, getOrdersForArtist]);
   const purchasedTickets = useMemo(() => getTicketsForArtist(artist.id), [artist.id, getTicketsForArtist]);
 
   useEffect(() => {
     if (pointsModalData === null) {
-      const rootEl = document.getElementById('root');
-      if (rootEl) {
+      const scrollContainer = mainScrollRef.current;
+      if (scrollContainer) {
         requestAnimationFrame(() => {
-          rootEl.scrollTop = scrollPositionRef.current;
+          scrollContainer.scrollTop = scrollPositionRef.current;
         });
       }
     }
   }, [pointsModalData]);
 
   const addFanPoints = useCallback((points: number, reason: string) => {
-    const rootEl = document.getElementById('root');
-    if (rootEl) {
-      scrollPositionRef.current = rootEl.scrollTop;
+    const scrollContainer = mainScrollRef.current;
+    if (scrollContainer) {
+      scrollPositionRef.current = scrollContainer.scrollTop;
     }
     setFanPoints(prev => prev + points);
     setPointsModalData({ points, reason });
   }, [setFanPoints]);
+
+  useEffect(() => {
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [activeSection, storeSection, fanAreaSection, artist.id]);
 
   const helpContext = useMemo(() => {
     if (activeSection === Section.TIMELINE) return 'novidades';
@@ -806,10 +811,10 @@ const ArtistPageContent: React.FC<ArtistPageProps> = ({
   const totalCartItems = useMemo(() => shoppingCart.reduce((sum, item) => sum + item.quantity, 0), [shoppingCart]);
 
   return (
-    <div className="relative bg-gray-50 h-full overflow-hidden flex flex-col">
+    <div className="relative min-h-[100dvh] bg-gray-50 overflow-hidden flex flex-col">
       <Header artist={artist} onSwitchArtist={() => setSwitcherVisible(true)} onViewImage={onViewImage} onOpenHelp={() => setHelpVisible(true)} />
       
-      <main className="flex-1 overflow-y-auto no-scrollbar pb-40 relative px-0">
+      <main ref={mainScrollRef} className="flex-1 overflow-y-auto no-scrollbar pb-40 relative px-0">
         <div 
           className="h-48 bg-cover bg-center"
           style={{ backgroundImage: `url(${artist.coverImageUrl})` }}

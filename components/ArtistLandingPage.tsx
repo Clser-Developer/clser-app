@@ -48,7 +48,7 @@ const ArtistLandingPage: React.FC<ArtistLandingPageProps> = ({ artist, onBack, o
   };
 
   return (
-    <div className="bg-white h-full flex flex-col text-gray-900 relative">
+    <div className="bg-white min-h-[100dvh] flex flex-col text-gray-900 relative">
       <div className="flex-1 overflow-y-auto no-scrollbar">
           <header className="relative h-64">
             <img src={artist.coverImageUrl} alt={`${artist.name} cover`} className="absolute inset-0 w-full h-full object-cover" />

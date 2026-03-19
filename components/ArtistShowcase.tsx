@@ -54,8 +54,7 @@ const ArtistShowcase: React.FC<ArtistShowcaseProps> = ({ artists, onSelectArtist
 
   const handleToggleShowAll = () => {
     setIsShowingAll(!isShowingAll);
-    const rootEl = document.getElementById('root');
-    if (rootEl) rootEl.scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: 'auto' });
   };
 
   return (
@@ -80,10 +79,10 @@ const ArtistShowcase: React.FC<ArtistShowcaseProps> = ({ artists, onSelectArtist
         {!isShowingAll && (
             <div className="text-center animate-fade-in px-4">
                <h1 className="text-3xl font-black text-gray-900 leading-tight tracking-tight">
-                 Escolha seu artista favorito
+                 Explore artistas e clubes
                </h1>
                <p className="text-sm text-gray-400 font-medium mt-2 leading-relaxed max-w-[280px] mx-auto">
-                 Você poderá seguir quantos artistas quiser, comece escolhendo o primeiro.
+                 Escolha por onde quer começar ou descubra novos universos para acompanhar.
                </p>
             </div>
         )}

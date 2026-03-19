@@ -238,7 +238,7 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({ artist, plan, onPaymentSu
   );
 
   return (
-    <div className="bg-gray-50 min-h-full text-gray-900">
+    <div className="bg-gray-50 min-h-[100dvh] text-gray-900">
       <div className="animate-fade-in">
         <header className="p-4 flex items-center bg-white/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-100">
           <button onClick={step === 1 ? onBack : () => setStep(1)} className="p-2 rounded-full hover:bg-gray-100 text-gray-500">

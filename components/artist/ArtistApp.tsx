@@ -37,6 +37,10 @@ const ArtistAppContent: React.FC<ArtistAppProps> = ({ artist: initialArtist, onE
   }, [initialArtist]);
 
   useEffect(() => {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [activeSection, currentArtist.id]);
+
+  useEffect(() => {
       const fetchInitialData = async () => {
           try {
               const leaderboardPromise = getFanLeaderboard(currentArtist.id, 0);
@@ -139,7 +143,7 @@ const ArtistAppContent: React.FC<ArtistAppProps> = ({ artist: initialArtist, onE
   };
 
   return (
-    <div className="bg-gray-50 h-full flex flex-col text-gray-900 relative">
+    <div className="bg-gray-50 min-h-[100dvh] flex flex-col text-gray-900 relative">
       <header className="bg-white/90 backdrop-blur-md sticky top-0 z-20 p-4 flex items-center justify-between border-b border-gray-100 shadow-sm">
         <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full border border-gray-200 overflow-hidden shadow-sm">

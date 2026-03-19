@@ -38,14 +38,10 @@ const CommentModal: React.FC<CommentModalProps> = ({ post, artist, userProfileIm
     useEffect(scrollToBottom, [comments]);
     
     useEffect(() => {
-        const rootEl = document.getElementById('root');
-        if (rootEl) {
-            rootEl.style.overflow = 'hidden';
-        }
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
         return () => {
-            if (rootEl) {
-                rootEl.style.overflow = 'auto';
-            }
+            document.body.style.overflow = previousOverflow;
         };
     }, []);
 

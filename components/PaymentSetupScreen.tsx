@@ -46,7 +46,7 @@ const PaymentSetupScreen: React.FC<PaymentSetupScreenProps> = ({ onSkip, onSaveC
     }
 
     return (
-        <div className="bg-gray-50 h-full flex flex-col p-6 animate-fade-in relative overflow-hidden">
+        <div className="bg-gray-50 min-h-[100dvh] flex flex-col p-6 animate-fade-in relative overflow-hidden">
             {/* Decorative BG */}
             <div className="absolute top-[-20%] right-[-20%] w-80 h-80 bg-rose-200/40 rounded-full blur-3xl pointer-events-none"></div>
             <div className="absolute bottom-[-20%] left-[-20%] w-80 h-80 bg-purple-200/40 rounded-full blur-3xl pointer-events-none"></div>
