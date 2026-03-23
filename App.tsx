@@ -281,8 +281,11 @@ const AppContent = () => {
   };
   
   const currentArtist = useMemo(
-    () => subscribedArtists.find((artist) => artist.id === currentArtistId),
-    [subscribedArtists, currentArtistId]
+    () =>
+      subscribedArtists.find((artist) => artist.id === currentArtistId) ||
+      allArtists.find((artist) => artist.id === currentArtistId) ||
+      null,
+    [allArtists, subscribedArtists, currentArtistId]
   );
   const artistsForShowcase = useMemo(
     () => allArtists.filter((artist) => !artistMemberships.some((membership) => membership.artistId === artist.id)),
@@ -355,6 +358,24 @@ const AppContent = () => {
       setIsOnboardingActive(false);
       setSelectedArtistForAccess(null);
       setFanModeStage('browse');
+  };
+
+  const handleBrowseArtistSelection = (artist: Artist) => {
+      setShowResumeScreen(false);
+
+      if (!isAccountCreated) {
+          setSelectedArtistForAccess(artist);
+          setFanModeStage('browse');
+          setIsOnboardingActive(true);
+          return;
+      }
+
+      resetFanNavigation();
+      ensureArtistMembership(artist.id);
+      setLastViewedArtistId(artist.id);
+      setCurrentArtistId(artist.id);
+      setSelectedArtistForAccess(null);
+      setFanModeStage('session');
   };
 
   const handleOnboardingCancel = () => {
@@ -439,18 +460,13 @@ const AppContent = () => {
       return (
           <ArtistShowcase 
               artists={artistsForShowcase} 
-              onSelectArtist={(artist) => {
-                setSelectedArtistForAccess(artist);
-                if (!isAccountCreated) {
-                  setIsOnboardingActive(true);
-                }
-              }} 
+              onSelectArtist={handleBrowseArtistSelection} 
               onBack={lastViewedArtistId ? () => { setCurrentArtistId(lastViewedArtistId); setLastViewedArtistId(null); setFanModeStage('session'); } : () => setFanModeStage('gateway')} 
           />
       );
     }
 
-    if (currentArtist && subscribedArtists.length > 0 && fanModeStage === 'session') {
+    if (currentArtist && fanModeStage === 'session') {
       return (
         <div className="bg-gray-50 text-gray-900 h-full">
           <ArtistPage 
