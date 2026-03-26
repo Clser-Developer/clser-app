@@ -1,144 +1,195 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Post, MerchItem, AuctionItem, ExclusiveReward, Event, MediaItem, MuralPost, FanArtPost, VaquinhaCampaign, FanGroup, ExperienceItem } from '../types';
+import { readStorageItem, writeStorageItem } from '../lib/storage';
 
-
-import { useState, useEffect } from 'react';
-import { Post, MerchItem, AuctionItem, ExclusiveReward, CartItem, Order, OrderStatus, Event, MediaItem, PurchasedTicket } from '../types';
-
-const mockShippedOrder: Order = {
-    id: 'SF-MOCK12345',
-    date: '3 dias atrás',
-    status: OrderStatus.SHIPPED,
-    items: [
-        // FIX: Property 'imageUrl' does not exist in type 'OrderItem'. Did you mean to write 'imageUrls'?
-        { id: 'm1', artistId: 'lia', name: 'Camiseta "Tour Estelar"', description: 'Leve a energia da turnê Estelar com você.', price: 89.90, imageUrls: ['https://picsum.photos/seed/lia-merch1/400/400'], sizes: ['M'], quantity: 1, isOnSale: false },
-        // FIX: Property 'imageUrl' does not exist in type 'OrderItem'. Did you mean to write 'imageUrls'?
-        { id: 'm2', artistId: 'lia', name: 'Moletom LIA Signature', description: 'Conforto e estilo para os dias mais frios.', price: 179.90, imageUrls: ['https://picsum.photos/seed/lia-merch2/400/400'], sizes: ['G'], quantity: 1, isOnSale: false }
-    ],
-    total: 284.80,
-    shippingCost: 15.00,
-    trackingCode: 'BR123456789XX',
-    trackingHistory: [
-        { date: 'Ontem, 18:30', status: 'Objeto em trânsito - por favor aguarde', location: 'de Unidade de Tratamento, CURITIBA - PR para Unidade de Distribuição, SAO PAULO - SP' },
-        { date: '2 dias atrás, 14:15', status: 'Objeto postado', location: 'Agência dos Correios, CURITIBA - PR' }
-    ]
+type PersistentArtistState = {
+    fanPoints: number;
+    likedPostIds: Set<string>;
+    commentedPostIds: Set<string>;
+    likedMuralPostIds: Set<string>;
+    likedFanArtPostIds: Set<string>;
+    joinedGroupIds: Set<string>;
+    posts: Post[];
+    merch: MerchItem[];
+    events: Event[];
+    auctions: AuctionItem[];
+    experiences: ExperienceItem[];
+    vaquinhaCampaigns: VaquinhaCampaign[];
+    fanGroups: FanGroup[];
+    donatedCampaigns: Record<string, number>;
+    exclusiveRewards: ExclusiveReward[];
+    media: MediaItem[];
+    muralPosts: MuralPost[];
+    fanArtPosts: FanArtPost[];
 };
 
+const createDefaultState = (artistFanPoints: number): PersistentArtistState => ({
+    fanPoints: artistFanPoints,
+    likedPostIds: new Set<string>(),
+    commentedPostIds: new Set<string>(),
+    likedMuralPostIds: new Set<string>(),
+    likedFanArtPostIds: new Set<string>(),
+    joinedGroupIds: new Set<string>(),
+    posts: [],
+    merch: [],
+    events: [],
+    auctions: [],
+    experiences: [],
+    vaquinhaCampaigns: [],
+    fanGroups: [],
+    donatedCampaigns: {},
+    exclusiveRewards: [],
+    media: [],
+    muralPosts: [],
+    fanArtPosts: [],
+});
 
-const getInitialState = (storageKey: string, artistFanPoints: number) => {
-    const savedStateJSON = localStorage.getItem(storageKey);
-    if (savedStateJSON) {
-        try {
-            const savedState = JSON.parse(savedStateJSON);
-            const initialFanPoints = savedState.fanPoints !== undefined ? savedState.fanPoints : artistFanPoints;
+const hydrateSavedState = (savedState: any, artistFanPoints: number): PersistentArtistState => {
+    const initialFanPoints = savedState.fanPoints !== undefined ? savedState.fanPoints : artistFanPoints;
 
-            return {
-                fanPoints: initialFanPoints,
-                likedPostIds: new Set<string>(savedState.likedPostIds || []),
-                commentedPostIds: new Set<string>(savedState.commentedPostIds || []),
-                shoppingCart: savedState.shoppingCart || [],
-                orders: savedState.orders || [mockShippedOrder],
-                purchasedTickets: savedState.purchasedTickets || [],
-                paymentMethod: savedState.paymentMethod || 'credit-card',
-                posts: savedState.posts || [],
-                merch: savedState.merch || [],
-                events: savedState.events || [],
-                auctions: savedState.auctions || [],
-                exclusiveRewards: savedState.exclusiveRewards || [],
-                media: savedState.media || [],
-            };
-        } catch (e) {
-            console.error("Failed to parse saved state, starting fresh.", e);
-        }
-    }
-    // Default initial state
     return {
-        fanPoints: artistFanPoints,
-        likedPostIds: new Set<string>(),
-        commentedPostIds: new Set<string>(),
-        shoppingCart: [],
-        orders: [mockShippedOrder],
-        purchasedTickets: [],
-        paymentMethod: 'credit-card',
-        posts: [],
-        merch: [],
-        events: [],
-        auctions: [],
-        exclusiveRewards: [],
-        media: [],
+        fanPoints: initialFanPoints,
+        likedPostIds: new Set<string>(savedState.likedPostIds || []),
+        commentedPostIds: new Set<string>(savedState.commentedPostIds || []),
+        likedMuralPostIds: new Set<string>(savedState.likedMuralPostIds || []),
+        likedFanArtPostIds: new Set<string>(savedState.likedFanArtPostIds || []),
+        joinedGroupIds: new Set<string>(savedState.joinedGroupIds || []),
+        posts: savedState.posts || [],
+        merch: savedState.merch || [],
+        events: savedState.events || [],
+        auctions: savedState.auctions || [],
+        experiences: savedState.experiences || [],
+        vaquinhaCampaigns: savedState.vaquinhaCampaigns || [],
+        fanGroups: savedState.fanGroups || [],
+        donatedCampaigns: savedState.donatedCampaigns || {},
+        exclusiveRewards: savedState.exclusiveRewards || [],
+        media: savedState.media || [],
+        muralPosts: savedState.muralPosts || [],
+        fanArtPosts: savedState.fanArtPosts || [],
     };
 };
 
-export const usePersistentArtistState = (artistId: string, initialFanPoints: number) => {
-    const storageKey = `artistState_${artistId}`;
+const getInitialState = (storageKeys: string[], artistFanPoints: number): PersistentArtistState => {
+    for (const storageKey of storageKeys) {
+        const savedStateJSON = readStorageItem(storageKey);
+        if (!savedStateJSON) {
+            continue;
+        }
 
-    const [fanPoints, setFanPoints] = useState(() => getInitialState(storageKey, initialFanPoints).fanPoints);
-    const [likedPostIds, setLikedPostIds] = useState<Set<string>>(() => getInitialState(storageKey, initialFanPoints).likedPostIds);
-    const [commentedPostIds, setCommentedPostIds] = useState<Set<string>>(() => getInitialState(storageKey, initialFanPoints).commentedPostIds);
-    const [shoppingCart, setShoppingCart] = useState<CartItem[]>(() => getInitialState(storageKey, initialFanPoints).shoppingCart);
-    const [orders, setOrders] = useState<Order[]>(() => getInitialState(storageKey, initialFanPoints).orders);
-    const [purchasedTickets, setPurchasedTickets] = useState<PurchasedTicket[]>(() => getInitialState(storageKey, initialFanPoints).purchasedTickets);
-    const [paymentMethod, setPaymentMethod] = useState<'credit-card' | 'pix'>(() => getInitialState(storageKey, initialFanPoints).paymentMethod);
-    const [posts, setPosts] = useState<Post[]>(() => getInitialState(storageKey, initialFanPoints).posts);
-    const [merch, setMerch] = useState<MerchItem[]>(() => getInitialState(storageKey, initialFanPoints).merch);
-    const [events, setEvents] = useState<Event[]>(() => getInitialState(storageKey, initialFanPoints).events);
-    const [auctions, setAuctions] = useState<AuctionItem[]>(() => getInitialState(storageKey, initialFanPoints).auctions);
-    const [exclusiveRewards, setExclusiveRewards] = useState<ExclusiveReward[]>(() => getInitialState(storageKey, initialFanPoints).exclusiveRewards);
-    const [media, setMedia] = useState<MediaItem[]>(() => getInitialState(storageKey, initialFanPoints).media);
+        try {
+            const savedState = JSON.parse(savedStateJSON);
+            return hydrateSavedState(savedState, artistFanPoints);
+        } catch (e) {
+            console.error(`Failed to parse saved state for key "${storageKey}", trying fallback.`, e);
+        }
+    }
 
-    // Effect to reset state when artist changes
+    return createDefaultState(artistFanPoints);
+};
+
+export const usePersistentArtistState = (artistId: string, initialFanPoints: number, userScopeId = 'anonymous') => {
+    const normalizedUserScopeId = userScopeId.trim() || 'anonymous';
+    const storageKey = `artistStateScoped_${normalizedUserScopeId}_${artistId}`;
+    const legacyStorageKey = `artistState_${artistId}`;
+    const storageCandidates = useMemo(
+        () => (storageKey === legacyStorageKey ? [storageKey] : [storageKey, legacyStorageKey]),
+        [legacyStorageKey, storageKey]
+    );
+    const initialState = useMemo(
+        () => getInitialState(storageCandidates, initialFanPoints),
+        [storageCandidates, initialFanPoints]
+    );
+
+    const [fanPoints, setFanPoints] = useState(initialState.fanPoints);
+    const [likedPostIds, setLikedPostIds] = useState<Set<string>>(initialState.likedPostIds);
+    const [commentedPostIds, setCommentedPostIds] = useState<Set<string>>(initialState.commentedPostIds);
+    const [likedMuralPostIds, setLikedMuralPostIds] = useState<Set<string>>(initialState.likedMuralPostIds);
+    const [likedFanArtPostIds, setLikedFanArtPostIds] = useState<Set<string>>(initialState.likedFanArtPostIds);
+    const [joinedGroupIds, setJoinedGroupIds] = useState<Set<string>>(initialState.joinedGroupIds);
+    const [posts, setPosts] = useState<Post[]>(initialState.posts);
+    const [merch, setMerch] = useState<MerchItem[]>(initialState.merch);
+    const [events, setEvents] = useState<Event[]>(initialState.events);
+    const [auctions, setAuctions] = useState<AuctionItem[]>(initialState.auctions);
+    const [experiences, setExperiences] = useState<ExperienceItem[]>(initialState.experiences);
+    const [vaquinhaCampaigns, setVaquinhaCampaigns] = useState<VaquinhaCampaign[]>(initialState.vaquinhaCampaigns);
+    const [fanGroups, setFanGroups] = useState<FanGroup[]>(initialState.fanGroups);
+    const [donatedCampaigns, setDonatedCampaigns] = useState<Record<string, number>>(initialState.donatedCampaigns);
+    const [exclusiveRewards, setExclusiveRewards] = useState<ExclusiveReward[]>(initialState.exclusiveRewards);
+    const [media, setMedia] = useState<MediaItem[]>(initialState.media);
+    const [muralPosts, setMuralPosts] = useState<MuralPost[]>(initialState.muralPosts);
+    const [fanArtPosts, setFanArtPosts] = useState<FanArtPost[]>(initialState.fanArtPosts);
+
     useEffect(() => {
-        const initialState = getInitialState(`artistState_${artistId}`, initialFanPoints);
         setFanPoints(initialState.fanPoints);
         setLikedPostIds(initialState.likedPostIds);
         setCommentedPostIds(initialState.commentedPostIds);
-        setShoppingCart(initialState.shoppingCart);
-        setOrders(initialState.orders);
-        setPurchasedTickets(initialState.purchasedTickets);
-        setPaymentMethod(initialState.paymentMethod);
+        setLikedMuralPostIds(initialState.likedMuralPostIds);
+        setLikedFanArtPostIds(initialState.likedFanArtPostIds);
+        setJoinedGroupIds(initialState.joinedGroupIds);
         setPosts(initialState.posts);
         setMerch(initialState.merch);
         setEvents(initialState.events);
         setAuctions(initialState.auctions);
+        setExperiences(initialState.experiences);
+        setVaquinhaCampaigns(initialState.vaquinhaCampaigns);
+        setFanGroups(initialState.fanGroups);
+        setDonatedCampaigns(initialState.donatedCampaigns);
         setExclusiveRewards(initialState.exclusiveRewards);
         setMedia(initialState.media);
-    }, [artistId, initialFanPoints]);
+        setMuralPosts(initialState.muralPosts);
+        setFanArtPosts(initialState.fanArtPosts);
+    }, [initialState]);
 
-    // Effect to SAVE state to localStorage whenever it changes.
     useEffect(() => {
         const stateToSave = {
             fanPoints,
             likedPostIds: Array.from(likedPostIds),
             commentedPostIds: Array.from(commentedPostIds),
-            shoppingCart,
-            orders,
-            purchasedTickets,
-            paymentMethod,
+            likedMuralPostIds: Array.from(likedMuralPostIds),
+            likedFanArtPostIds: Array.from(likedFanArtPostIds),
+            joinedGroupIds: Array.from(joinedGroupIds),
             posts,
             merch,
             events,
             auctions,
+            experiences,
+            vaquinhaCampaigns,
+            fanGroups,
+            donatedCampaigns,
             exclusiveRewards,
             media,
+            muralPosts,
+            fanArtPosts,
         };
-        try {
-            localStorage.setItem(storageKey, JSON.stringify(stateToSave));
-        } catch (error) {
-            console.error("Failed to save state to localStorage", error);
-        }
-    }, [fanPoints, likedPostIds, commentedPostIds, shoppingCart, orders, purchasedTickets, paymentMethod, posts, merch, events, auctions, exclusiveRewards, media, storageKey]);
+        const persistTimer = window.setTimeout(() => {
+            try {
+                writeStorageItem(storageKey, JSON.stringify(stateToSave));
+            } catch (error) {
+                console.error("Failed to save state to localStorage", error);
+            }
+        }, 120);
+
+        return () => window.clearTimeout(persistTimer);
+    }, [fanPoints, likedPostIds, commentedPostIds, likedMuralPostIds, likedFanArtPostIds, joinedGroupIds, posts, merch, events, auctions, experiences, vaquinhaCampaigns, fanGroups, donatedCampaigns, exclusiveRewards, media, muralPosts, fanArtPosts, storageKey]);
 
     return {
         fanPoints, setFanPoints,
         likedPostIds, setLikedPostIds,
         commentedPostIds, setCommentedPostIds,
-        shoppingCart, setShoppingCart,
-        orders, setOrders,
-        purchasedTickets, setPurchasedTickets,
-        paymentMethod, setPaymentMethod,
+        likedMuralPostIds, setLikedMuralPostIds,
+        likedFanArtPostIds, setLikedFanArtPostIds,
+        joinedGroupIds, setJoinedGroupIds,
         posts, setPosts,
         merch, setMerch,
         events, setEvents,
         auctions, setAuctions,
+        experiences, setExperiences,
+        vaquinhaCampaigns, setVaquinhaCampaigns,
+        fanGroups, setFanGroups,
+        donatedCampaigns, setDonatedCampaigns,
         exclusiveRewards, setExclusiveRewards,
-        media, setMedia
+        media, setMedia,
+        muralPosts, setMuralPosts,
+        fanArtPosts, setFanArtPosts,
     };
 };

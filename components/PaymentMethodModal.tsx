@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import Icon from './Icon';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 
 interface PaymentMethodModalProps {
   isVisible: boolean;
@@ -12,6 +17,11 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({ isVisible, onCl
   const [selectedMethod, setSelectedMethod] = useState(currentMethod);
   const [selectedCard, setSelectedCard] = useState('1234');
 
+  useEffect(() => {
+    if (!isVisible) return;
+    setSelectedMethod(currentMethod);
+  }, [currentMethod, isVisible]);
+
   if (!isVisible) return null;
 
   const handleSave = () => {
@@ -20,50 +30,73 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({ isVisible, onCl
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-[60] flex items-end justify-center" aria-modal="true" role="dialog">
-      <div className="bg-gray-800 rounded-t-2xl w-full max-w-md shadow-2xl border-t border-gray-700 animate-slide-up">
-        <header className="p-4 border-b border-gray-700 flex justify-between items-center">
-          <h2 className="text-lg font-bold text-white">Forma de Pagamento</h2>
-          <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-700">
-            <Icon name="close" className="w-6 h-6" />
-          </button>
-        </header>
-        <div className="p-6">
-          <div className="flex bg-gray-900/50 p-1 rounded-lg mb-6">
-            <button onClick={() => setSelectedMethod('credit-card')} className={`w-1/2 py-2 text-sm font-bold rounded-md transition-colors ${selectedMethod === 'credit-card' ? 'bg-orange-500 text-white' : 'text-gray-300'}`}>Cartão de Crédito</button>
-            <button onClick={() => setSelectedMethod('pix')} className={`w-1/2 py-2 text-sm font-bold rounded-md transition-colors ${selectedMethod === 'pix' ? 'bg-orange-500 text-white' : 'text-gray-300'}`}>Pix</button>
-          </div>
+    <ModalShell open={isVisible} onClose={onClose} variant="sheet">
+      <ModalHeader>
+        <ModalTitle className="ml-1">Forma de Pagamento</ModalTitle>
+        <ModalCloseButton onClick={onClose} />
+      </ModalHeader>
+      <ModalBody>
+          <Tabs
+            value={selectedMethod}
+            onValueChange={(value) => setSelectedMethod(value as 'credit-card' | 'pix')}
+            className="mb-8"
+          >
+            <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-gray-50 p-1.5 shadow-inner">
+              <TabsTrigger
+                value="credit-card"
+                className="rounded-xl text-xs font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-500 data-[state=active]:shadow-sm"
+              >
+                Crédito
+              </TabsTrigger>
+              <TabsTrigger
+                value="pix"
+                className="rounded-xl text-xs font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-rose-500 data-[state=active]:shadow-sm"
+              >
+                Pix
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           {selectedMethod === 'credit-card' ? (
-            <div className="space-y-3">
-               <button onClick={() => setSelectedCard('1234')} className={`w-full text-left p-4 rounded-lg border-2 flex items-center justify-between ${selectedCard === '1234' ? 'border-orange-500 bg-orange-500/10' : 'border-gray-700 bg-gray-900/50'}`}>
-                    <p className="font-semibold text-white">**** **** **** 1234</p>
-                    {selectedCard === '1234' && <Icon name="check-circle" className="w-6 h-6 text-orange-400" />}
+            <div className="space-y-4">
+               <button onClick={() => setSelectedCard('1234')} className={`w-full text-left p-5 rounded-2xl border-2 flex items-center justify-between transition-all group ${selectedCard === '1234' ? 'border-rose-500 bg-rose-50/50 shadow-sm' : 'border-gray-100 bg-gray-50 hover:border-gray-200'}`}>
+                    <div className="flex items-center space-x-4">
+                        <div className="p-2 bg-white rounded-lg shadow-sm">
+                            <Icon name="credit-card" className="w-6 h-6 text-gray-900" />
+                        </div>
+                        <p className="font-black text-gray-900 text-sm italic">•••• •••• •••• 1234</p>
+                    </div>
+                    {selectedCard === '1234' && <Icon name="check-circle" className="w-6 h-6 text-rose-500" />}
                 </button>
-                 <button onClick={() => setSelectedCard('5678')} className={`w-full text-left p-4 rounded-lg border-2 flex items-center justify-between ${selectedCard === '5678' ? 'border-orange-500 bg-orange-500/10' : 'border-gray-700 bg-gray-900/50'}`}>
-                    <p className="font-semibold text-white">**** **** **** 5678</p>
-                    {selectedCard === '5678' && <Icon name="check-circle" className="w-6 h-6 text-orange-400" />}
+                 <button onClick={() => setSelectedCard('5678')} className={`w-full text-left p-5 rounded-2xl border-2 flex items-center justify-between transition-all group ${selectedCard === '5678' ? 'border-rose-500 bg-rose-50/50 shadow-sm' : 'border-gray-100 bg-gray-50 hover:border-gray-200'}`}>
+                    <div className="flex items-center space-x-4">
+                        <div className="p-2 bg-white rounded-lg shadow-sm">
+                            <Icon name="credit-card" className="w-6 h-6 text-gray-900" />
+                        </div>
+                        <p className="font-black text-gray-900 text-sm italic">•••• •••• •••• 5678</p>
+                    </div>
+                    {selectedCard === '5678' && <Icon name="check-circle" className="w-6 h-6 text-rose-500" />}
                 </button>
-                <button className="w-full text-center p-3 border-2 border-dashed border-gray-600 text-gray-300 font-semibold rounded-lg hover:border-orange-500 hover:text-orange-400 transition-colors">
+                <Button variant="outline" className="mt-4 h-14 w-full rounded-2xl border-dashed text-xs font-black uppercase tracking-widest text-gray-500 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-500">
                     Adicionar novo cartão
-                </button>
+                </Button>
             </div>
           ) : (
-            <div className="text-center p-6 bg-gray-900/50 rounded-lg">
-              <p className="text-gray-300">Na próxima tela, um QR Code será gerado para pagamento com Pix.</p>
-            </div>
+            <Card className="gap-4 rounded-3xl border-gray-100 bg-gray-50 p-8 text-center shadow-inner">
+              <Icon name="device-mobile" className="w-12 h-12 text-rose-500 mx-auto mb-4" />
+              <p className="text-gray-600 text-sm font-medium leading-relaxed">Na próxima tela, um <span className="font-black">QR Code Dinâmico</span> será gerado para seu pagamento instantâneo.</p>
+            </Card>
           )}
-        </div>
-        <footer className="p-4 bg-gray-900/50">
-          <button
+      </ModalBody>
+      <ModalFooter className="pb-10">
+          <Button
             onClick={handleSave}
-            className="w-full bg-orange-500 text-white font-bold py-4 px-4 rounded-lg hover:bg-orange-600 transition-colors"
+            className="w-full rounded-2xl py-6 text-sm font-black"
           >
-            Salvar
-          </button>
-        </footer>
-      </div>
-    </div>
+            Confirmar Seleção
+          </Button>
+      </ModalFooter>
+    </ModalShell>
   );
 };
 

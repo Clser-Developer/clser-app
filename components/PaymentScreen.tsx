@@ -1,152 +1,313 @@
 
-import React, { useState } from 'react';
-import { Artist, Plan } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Artist, Plan, UserAddress, UserPhone } from '../types';
+import { BillingData } from '../App';
 import Icon from './Icon';
-import { Button } from '@/components/ui/button';
+import CountrySelect from './CountrySelect';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
+import { Input } from './ui/input';
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 
 interface PaymentScreenProps {
   artist: Artist;
   plan: Plan;
-  onPaymentSuccess: () => void;
+  onPaymentSuccess: (billingData: BillingData) => void;
   onBack: () => void;
   onViewImage: (url: string) => void;
+  user: {
+      fullName: string;
+      email: string;
+      taxId: string;
+      phone: UserPhone;
+      address: UserAddress;
+  };
+  paymentMethod: 'credit-card' | 'pix';
+  onPaymentMethodChange: (method: 'credit-card' | 'pix') => void;
+  isSetupMode?: boolean;
 }
 
-const LoadingSpinner: React.FC = () => (
-    <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+const LoadingSpinner: React.FC<{ small?: boolean }> = ({ small = false }) => (
+    <div className={`${small ? 'w-5 h-5 border-2' : 'w-6 h-6 border-4'} border-rose-500 border-t-transparent rounded-full animate-spin`}></div>
 );
 
-const WalletOptions: React.FC = () => (
-    <div className="space-y-3">
-        <p className="text-sm text-gray-400 text-center mb-4">Selecione sua carteira digital para continuar.</p>
-        <Button className="w-full text-center p-3 bg-black text-white font-semibold rounded-lg border border-gray-600 hover:border-white">
-             Apple Pay
-        </Button>
-        <Button className="w-full text-center p-3 bg-white text-gray-700 font-semibold rounded-lg border border-gray-400 hover:border-black">
-            <span className="font-bold">G</span> Pay
-        </Button>
-        <Button className="w-full text-center p-3 bg-gray-700 text-white font-semibold rounded-lg border border-gray-600 hover:border-white">
-            Samsung Wallet
-        </Button>
-        <Button className="w-full text-center p-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">
-            PayPal
-        </Button>
-    </div>
-);
+const labelClassName = 'mb-1 block text-sm font-medium text-gray-500';
+const inputClassName = 'h-12 rounded-xl border-gray-200 bg-white text-gray-900 shadow-sm focus-visible:border-rose-300 focus-visible:ring-rose-500/25';
+const paymentInputClassName = 'h-12 rounded-xl border-gray-200 bg-gray-50 text-gray-900 focus-visible:border-rose-300 focus-visible:ring-rose-500/25';
 
-const PaymentScreen: React.FC<PaymentScreenProps> = ({ artist, plan, onPaymentSuccess, onBack, onViewImage }) => {
-  const [paymentMethod, setPaymentMethod] = useState('credit-card');
-  const [isProcessing, setIsProcessing] = useState(false);
+const PaymentScreen: React.FC<PaymentScreenProps> = ({ artist, plan, onPaymentSuccess, onBack, onViewImage, user, paymentMethod, onPaymentMethodChange, isSetupMode }) => {
+  const [step, setStep] = useState(1);
+  const [billingDetails, setBillingDetails] = useState<BillingData>({
+      fullName: user.fullName || '',
+      email: user.email || '',
+      taxId: user.taxId || '',
+      phone: user.phone || { ddi: '+55', number: '' },
+      address: user.address || { cep: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '' },
+  });
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isCepLoading, setIsCepLoading] = useState(false);
+  const [walletNotice, setWalletNotice] = useState<string | null>(null);
+  
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  const handlePayment = () => {
-    setIsProcessing(true);
-    setTimeout(() => {
-      onPaymentSuccess();
-    }, 2500); // Simulate network delay
+  useEffect(() => {
+    const cep = billingDetails.address.cep.replace(/\D/g, '');
+    if (billingDetails.phone.ddi === '+55' && cep.length === 8) {
+        setIsCepLoading(true);
+        fetch(`https://viacep.com.br/ws/${cep}/json/`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.erro) {
+                    setBillingDetails(prev => ({
+                        ...prev,
+                        address: {
+                            ...prev.address,
+                            street: data.logradouro,
+                            neighborhood: data.bairro,
+                            city: data.localidade,
+                            state: data.uf,
+                        }
+                    }));
+                }
+            })
+            .catch(() => {})
+            .finally(() => setIsCepLoading(false));
+    }
+  }, [billingDetails.address.cep, billingDetails.phone.ddi]);
+
+  const handleBillingChange = (field: keyof BillingData, value: any) => {
+    setBillingDetails(prev => ({ ...prev, [field]: value }));
   };
 
-  return (
-    <div className="bg-gray-900 text-white">
-      <div className="animate-fade-in">
-        <header className="p-4 flex items-center bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-700">
-          <button onClick={onBack} className="p-2 rounded-full hover:bg-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-            </svg>
-          </button>
-          <h1 className="text-xl font-bold text-center flex-grow mr-10">Pagamento</h1>
-        </header>
+  const handleAddressChange = (field: keyof UserAddress, value: string) => {
+    setBillingDetails(prev => ({
+      ...prev,
+      address: { ...prev.address, [field]: value }
+    }));
+  };
+  
+  const validateBillingForm = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!billingDetails.fullName.trim()) newErrors.fullName = "Nome completo é obrigatório.";
+    if (!billingDetails.email.includes('@')) newErrors.email = "E-mail inválido.";
+    if (billingDetails.taxId.trim() && billingDetails.phone.ddi === '+55' && billingDetails.taxId.replace(/\D/g, '').length !== 11) {
+      newErrors.taxId = "Documento fiscal inválido.";
+    }
+    if (!billingDetails.address.street.trim()) newErrors.street = "Rua é obrigatória.";
+    if (!billingDetails.address.number.trim()) newErrors.number = "Número é obrigatório.";
+    if (!billingDetails.address.city.trim()) newErrors.city = "Cidade é obrigatória.";
+    if (!billingDetails.address.state.trim()) newErrors.state = "Região/Estado é obrigatório.";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-        <main className="p-4 max-w-2xl mx-auto">
-          {/* Order Summary */}
-          <div className="bg-gray-800 rounded-2xl p-5 mb-6 border border-gray-700">
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={() => onViewImage(artist.profileImageUrl)} 
-                aria-label="Ver foto de perfil ampliada"
-                className="rounded-full flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-magenta-500"
+  const handleContinueToPayment = () => {
+    if (validateBillingForm()) {
+        setStep(2);
+    }
+  };
+
+  const handlePayment = () => {
+    setIsProcessingPayment(true);
+    setTimeout(() => {
+      onPaymentSuccess(billingDetails);
+    }, 2500);
+  };
+
+  const handleDemoBypass = () => {
+    const demoData: BillingData = {
+        fullName: 'Fã Demo',
+        email: 'demo@superfans.app',
+        taxId: '',
+        phone: { ddi: '+55', number: '999999999' },
+        address: {
+            cep: '01001-000',
+            street: 'Rua da Demonstração',
+            number: '10',
+            complement: 'Apto 1',
+            neighborhood: 'Centro',
+            city: 'São Paulo',
+            state: 'SP'
+        }
+    };
+    onPaymentSuccess(demoData);
+  };
+  
+  const formatCPF = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+      .substring(0, 14);
+  };
+
+  const renderBillingForm = () => (
+    <div className="space-y-4">
+        <h3 className="text-lg font-bold text-gray-900">Seus Dados</h3>
+        <div>
+            <label className={labelClassName}>Nome Completo</label>
+            <Input type="text" value={billingDetails.fullName} onChange={e => handleBillingChange('fullName', e.target.value)} aria-invalid={!!errors.fullName} className={inputClassName} />
+        </div>
+        <div>
+            <label className={labelClassName}>Email</label>
+            <Input type="email" value={billingDetails.email} onChange={e => handleBillingChange('email', e.target.value)} aria-invalid={!!errors.email} className={inputClassName} />
+        </div>
+        
+        <div className="flex items-start space-x-2">
+            <CountrySelect selectedDDI={billingDetails.phone.ddi} onDDIChange={ddi => handleBillingChange('phone', { ...billingDetails.phone, ddi })}/>
+            <div className="flex-1">
+                 <label className={labelClassName}>Telefone</label>
+                <Input type="tel" value={billingDetails.phone.number} onChange={e => handleBillingChange('phone', { ...billingDetails.phone, number: e.target.value })} className={inputClassName} />
+            </div>
+        </div>
+        
+         <div>
+            <label className={labelClassName}>Documento Fiscal (opcional)</label>
+            <Input
+              type="text"
+              value={billingDetails.phone.ddi === '+55' ? formatCPF(billingDetails.taxId) : billingDetails.taxId}
+              onChange={e => handleBillingChange('taxId', e.target.value)}
+              aria-invalid={!!errors.taxId}
+              className={inputClassName}
+            />
+         </div>
+
+        <h3 className="text-lg font-bold text-gray-900 pt-4">Endereço de Cobrança</h3>
+        <div className="relative">
+            <label className={labelClassName}>Código Postal</label>
+            <Input type="text" value={billingDetails.address.cep} onChange={e => handleAddressChange('cep', e.target.value)} maxLength={9} aria-invalid={!!errors.cep} className={inputClassName} />
+            {isCepLoading && <div className="absolute right-3 top-9"><LoadingSpinner small /></div>}
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-2">
+                <label className={labelClassName}>Rua</label>
+                <Input type="text" value={billingDetails.address.street} onChange={e => handleAddressChange('street', e.target.value)} aria-invalid={!!errors.street} className={inputClassName} />
+            </div>
+            <div>
+                <label className={labelClassName}>Nº</label>
+                <Input type="text" value={billingDetails.address.number} onChange={e => handleAddressChange('number', e.target.value)} aria-invalid={!!errors.number} className={inputClassName} />
+            </div>
+        </div>
+         <div>
+            <label className={labelClassName}>Complemento</label>
+            <Input type="text" value={billingDetails.address.complement} onChange={e => handleAddressChange('complement', e.target.value)} className={inputClassName} />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+            <div>
+                <label className={labelClassName}>Bairro / Distrito</label>
+                <Input type="text" value={billingDetails.address.neighborhood} onChange={e => handleAddressChange('neighborhood', e.target.value)} className={inputClassName} />
+            </div>
+            <div>
+                <label className={labelClassName}>Cidade</label>
+                <Input type="text" value={billingDetails.address.city} onChange={e => handleAddressChange('city', e.target.value)} aria-invalid={!!errors.city} className={inputClassName} />
+            </div>
+        </div>
+        <div>
+            <label className={labelClassName}>Estado / Região</label>
+            <Input type="text" value={billingDetails.address.state} onChange={e => handleAddressChange('state', e.target.value)} aria-invalid={!!errors.state} className={inputClassName} />
+        </div>
+    </div>
+  );
+
+  const renderPaymentForm = () => (
+     <div className="animate-fade-in">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Forma de Pagamento</h3>
+          <Tabs value={paymentMethod} onValueChange={(value) => onPaymentMethodChange(value as 'credit-card' | 'pix')} className="mb-6">
+            <TabsList className="grid w-full grid-cols-3 rounded-xl bg-gray-100 p-1">
+              <TabsTrigger value="credit-card" className="font-bold data-[state=active]:text-rose-600">Crédito</TabsTrigger>
+              <TabsTrigger value="pix" className="font-bold data-[state=active]:text-rose-600">Pix</TabsTrigger>
+              <button
+                type="button"
+                onClick={() => setWalletNotice('Integração com carteiras digitais será liberada em breve.')}
+                className="rounded-md px-3 py-2 text-sm font-bold text-gray-400 transition-colors hover:text-gray-600"
               >
-                <img src={artist.profileImageUrl} alt={artist.name} className="w-16 h-16 rounded-full border-2 border-magenta-500 object-cover transition-transform hover:scale-105" />
+                Carteiras
               </button>
-              <div>
-                <p className="text-gray-400 text-sm">Assinatura do Fã Clube</p>
-                <h2 className="text-xl font-bold">{artist.name}</h2>
-                <p className="font-semibold text-orange-400">{plan.type}</p>
-              </div>
+            </TabsList>
+          </Tabs>
+          {walletNotice && (
+            <div className="mb-4 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-xs font-semibold text-blue-700">
+              {walletNotice}
             </div>
-            <div className="border-t border-gray-700 my-4"></div>
-            <div className="flex justify-between items-center text-lg">
-              <span className="text-gray-300">Total</span>
-              <span className="font-bold text-white">R$ {plan.price.toFixed(2).replace('.', ',')} / mês</span>
-            </div>
-          </div>
-
-          {/* Payment Method */}
-          <h3 className="text-lg font-bold mb-4">Forma de Pagamento</h3>
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <button
-              onClick={() => setPaymentMethod('credit-card')}
-              className={`p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'credit-card' ? 'bg-magenta-600/30 border-magenta-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500'}`}
-            >Crédito</button>
-            <button
-              onClick={() => setPaymentMethod('pix')}
-              className={`p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'pix' ? 'bg-magenta-600/30 border-magenta-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500'}`}
-            >Pix</button>
-            <button
-              onClick={() => setPaymentMethod('wallets')}
-              className={`p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'wallets' ? 'bg-magenta-600/30 border-magenta-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500'}`}
-            >Carteiras</button>
-          </div>
-
-          {/* Dynamic Payment Content */}
-          <div className="bg-gray-800 rounded-2xl p-5 border border-gray-700">
-            {paymentMethod === 'credit-card' && (
+          )}
+          <Card className="gap-4 rounded-3xl border-gray-100 p-6">
+            {paymentMethod === 'credit-card' ? (
               <form className="space-y-4">
-                <div>
-                  <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-300 mb-1">Número do Cartão</label>
-                  <input type="tel" id="cardNumber" inputMode="numeric" pattern="[0-9\s]{13,19}" autoComplete="cc-number" maxLength={19} placeholder="0000 0000 0000 0000" className="w-full bg-gray-700 border-gray-600 rounded-md p-3 text-white focus:ring-magenta-500 focus:border-magenta-500" />
-                </div>
-                <div>
-                  <label htmlFor="cardName" className="block text-sm font-medium text-gray-300 mb-1">Nome no Cartão</label>
-                  <input type="text" id="cardName" autoComplete="cc-name" placeholder="Seu nome completo" className="w-full bg-gray-700 border-gray-600 rounded-md p-3 text-white focus:ring-magenta-500 focus:border-magenta-500" />
-                </div>
+                <Input type="text" placeholder="Número do Cartão" className={paymentInputClassName} />
+                <Input type="text" placeholder="Nome no Cartão" className={paymentInputClassName} />
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="cardExpiry" className="block text-sm font-medium text-gray-300 mb-1">Validade</label>
-                    <input type="tel" id="cardExpiry" autoComplete="cc-exp" placeholder="MM/AA" className="w-full bg-gray-700 border-gray-600 rounded-md p-3 text-white focus:ring-magenta-500 focus:border-magenta-500" />
-                  </div>
-                  <div>
-                    <label htmlFor="cardCvv" className="block text-sm font-medium text-gray-300 mb-1">CVV</label>
-                    <input type="tel" id="cardCvv" autoComplete="cc-csc" placeholder="123" className="w-full bg-gray-700 border-gray-600 rounded-md p-3 text-white focus:ring-magenta-500 focus:border-magenta-500" />
-                  </div>
+                  <Input type="text" placeholder="Validade (MM/AA)" className={paymentInputClassName} />
+                  <Input type="text" placeholder="CVV" className={paymentInputClassName} />
                 </div>
               </form>
-            )}
-            {paymentMethod === 'pix' && (
+            ) : (
               <div className="text-center p-6 flex flex-col items-center">
-                 <p className="text-gray-300 mb-4">Um QR Code para pagamento com Pix seria exibido aqui.</p>
-                 <div className="w-32 h-32 bg-gray-600 flex items-center justify-center text-gray-400 rounded-lg">QR Code</div>
+                 <p className="text-gray-500 mb-4">Um QR Code para pagamento com Pix será exibido aqui.</p>
+                 <div className="w-32 h-32 bg-gray-200 flex items-center justify-center text-gray-400 rounded-lg">QR Code</div>
               </div>
             )}
-            {paymentMethod === 'wallets' && (
-              <WalletOptions />
+          </Card>
+     </div>
+  );
+
+  return (
+    <div className="safe-screen bg-gray-50 text-gray-900">
+      <div className="animate-fade-in">
+        <header className="p-4 flex items-center bg-white/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-100">
+          <button onClick={step === 1 ? onBack : () => setStep(1)} className="p-2 rounded-full hover:bg-gray-100 text-gray-500">
+            <Icon name="arrowLeft" className="w-6 h-6" />
+          </button>
+          <h1 className="text-xl font-bold text-center flex-grow mr-10">{isSetupMode ? 'Configurar Pagamento' : 'Pagamento'}</h1>
+        </header>
+
+        <main className="p-4 max-w-2xl mx-auto safe-bottom-pad">
+          <Card className="mb-6 gap-0 rounded-3xl border-gray-100 p-5 shadow-sm">
+            <div className="flex items-center space-x-4">
+              <button onClick={() => onViewImage(artist.profileImageUrl)} className="rounded-full flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500">
+                <img src={artist.profileImageUrl} alt={artist.name} className="w-16 h-16 rounded-full border-4 border-white shadow-md object-cover transition-transform hover:scale-105" />
+              </button>
+              <div>
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Assinatura</p>
+                <h2 className="text-xl font-black text-gray-900">{artist.name}</h2>
+                <p className="font-semibold text-rose-500 text-sm">{plan.type}</p>
+              </div>
+            </div>
+            {plan.price > 0 && (
+                <>
+                    <div className="border-t border-gray-100 my-4"></div>
+                    <div className="flex justify-between items-center text-lg">
+                    <span className="text-gray-500">Total</span>
+                    <span className="font-black text-gray-900">R$ {plan.price.toFixed(2).replace('.', ',')} / mês</span>
+                    </div>
+                </>
             )}
-          </div>
+          </Card>
+
+          {step === 1 ? renderBillingForm() : renderPaymentForm()}
 
           <div className="mt-8">
-              <button
-                onClick={handlePayment}
-                disabled={isProcessing}
-                className="w-full bg-orange-500 text-white font-bold py-4 px-4 rounded-lg hover:bg-orange-600 transition-transform hover:scale-105 transform-gpu disabled:bg-orange-700 disabled:cursor-not-allowed disabled:scale-100 flex justify-center items-center"
+              <Button
+                onClick={step === 1 ? handleContinueToPayment : handlePayment}
+                disabled={isProcessingPayment}
+                className="h-14 w-full rounded-2xl text-sm font-black shadow-lg shadow-rose-500/20 transition-transform hover:scale-[1.01]"
               >
-                {isProcessing ? <LoadingSpinner/> : `Confirmar Pagamento - R$ ${plan.price.toFixed(2).replace('.', ',')}`}
-              </button>
-              <p className="text-xs text-gray-500 text-center mt-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline mr-1 align-text-bottom" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                  </svg>
-                  Pagamento seguro. Cancele quando quiser.
-              </p>
+                {isProcessingPayment ? <LoadingSpinner/> : 
+                 step === 1 ? 'Continuar para Pagamento' : `Confirmar - R$ ${plan.price.toFixed(2).replace('.', ',')}`}
+              </Button>
+              <div className="mt-4 text-center">
+                <p className="text-xs text-gray-400 inline-block">
+                    <Icon name="lock-closed" className="h-3 w-3 inline mr-1 align-text-bottom" />
+                    Pagamento seguro.
+                </p>
+                <button 
+                    onClick={handleDemoBypass}
+                    className="ml-2 text-[10px] text-gray-400 hover:text-rose-500 underline transition-colors"
+                >
+                    [Demo: Pular]
+                </button>
+              </div>
           </div>
         </main>
       </div>

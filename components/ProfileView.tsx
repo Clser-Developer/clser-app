@@ -1,177 +1,304 @@
-import React, { useState } from 'react';
-import { Artist, FanProfile, ExclusiveReward, RewardType, PlanType, Plan } from '../types';
-import { getFanLevel, calculateLevelProgress } from '../services/gamificationService';
+import React, { useState, useRef, ChangeEvent } from 'react';
+import { Artist, PlanType, Plan, Section, FanAreaSection } from '../types';
 import Icon from './Icon';
-import RewardCard from './RewardCard';
 import PlanCard from './PlanCard';
+import EditProfileModal from './EditProfileModal';
+import { useBilling } from '../contexts/BillingContext';
+import { useGlobalUserState } from '../hooks/useGlobalUserState';
+import ContactVerificationModal from './ContactVerificationModal';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
+import { ModalBody, ModalFooter, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface ProfileViewProps {
   artist: Artist;
-  onEditAddress: () => void;
-  onEditPaymentMethod: () => void;
+  fanPoints: number;
+  onNavigateToFanArea: () => void;
   onOpenPaymentHistory: () => void;
   onLogout: () => void;
+  onViewImage: (url: string) => void;
+  userNickname: string;
+  userProfileImageUrl: string;
+  onProfileImageChange: (dataUrl: string) => void;
+  onEditAddress: () => void;
+  onEditPaymentMethod: () => void;
 }
 
 const SettingsItem: React.FC<{ icon: string; title: string; subtitle?: string; onClick: () => void; }> = ({ icon, title, subtitle, onClick }) => (
-  <button onClick={onClick} className="w-full flex items-center text-left p-4 hover:bg-gray-700/50 transition-colors rounded-lg">
-    <Icon name={icon} className="w-6 h-6 text-orange-400 mr-4 flex-shrink-0" />
-    <div className="flex-1">
-      <p className="font-semibold text-white">{title}</p>
-      {subtitle && <p className="text-sm text-gray-400">{subtitle}</p>}
+  <button onClick={onClick} className="group w-full flex items-center text-left px-5 py-4 hover:bg-gray-50/80 transition-colors border-b border-gray-100 last:border-0">
+    <div className="mr-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-50 text-gray-500 transition-colors group-hover:bg-rose-50 group-hover:text-rose-500">
+      <Icon name={icon} className="w-5 h-5" />
     </div>
-    <Icon name="chevron-right" className="w-5 h-5 text-gray-500" />
+    <div className="flex-1">
+      <p className="text-sm font-black text-gray-900">{title}</p>
+      {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+    </div>
+    <Icon name="chevron-right" className="w-5 h-5 text-gray-300 transition-transform group-hover:translate-x-0.5" />
   </button>
 );
 
-const ProfileSummary: React.FC = () => {
-    const [nickname, setNickname] = useState('Fã nº 1');
-    const [isEditing, setIsEditing] = useState(false);
+const sectionCardClassName = 'rounded-[2rem] border border-gray-100 bg-white shadow-[0_18px_42px_-34px_rgba(15,23,42,0.32)]';
 
-    const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setNickname(e.target.value);
+const SummaryStat: React.FC<{ value: string; label: string }> = ({ value, label }) => (
+  <div className="rounded-[1.75rem] border border-gray-100 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-4 text-center shadow-[0_12px_32px_-24px_rgba(15,23,42,0.45)]">
+    <p className="text-xl font-black text-gray-950">{value}</p>
+    <p className="mt-1 text-[11px] font-black uppercase tracking-[0.14em] text-gray-400">{label}</p>
+  </div>
+);
+
+const VerificationPill: React.FC<{ label: string; verified: boolean; onClick?: () => void }> = ({ label, verified, onClick }) => {
+  const badge = (
+    <Badge
+      variant="secondary"
+      className={`cursor-default gap-2 rounded-full px-3 py-1.5 text-xs font-black ${
+        verified ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+      }`}
+    >
+      <span className={`h-2 w-2 rounded-full ${verified ? 'bg-green-500' : 'bg-amber-500'}`}></span>
+      <span>{label}</span>
+    </Badge>
+  );
+
+  if (!onClick) return badge;
+
+  return <button onClick={onClick} className="transition-all hover:brightness-95">{badge}</button>;
+};
+
+const ProfileSummary: React.FC<{
+  artistName: string;
+  nickname: string;
+  profileImageUrl: string;
+  fanPoints: number; // artist-specific
+  onProfileImageChange: (imageDataUrl: string) => void;
+  onNavigateToFanArea: () => void;
+  onViewImage: () => void;
+  onEditProfile: () => void;
+}> = ({ artistName, nickname, profileImageUrl, fanPoints, onProfileImageChange, onNavigateToFanArea, onViewImage, onEditProfile }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                if (reader.result) {
+                    onProfileImageChange(reader.result as string);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
     };
-
-    const handleFinishEditing = () => {
-        setIsEditing(false);
-        // Here you would typically save the nickname
-    };
-
+    
     return (
-        <div className="flex flex-col items-center text-center p-6">
-            <img
-              src="https://picsum.photos/seed/user-profile/200/200"
-              alt="User profile"
-              className="w-28 h-28 rounded-full mb-4 border-4 border-magenta-500 object-cover shadow-lg"
-            />
-            {isEditing ? (
-                <input
-                    type="text"
-                    value={nickname}
-                    onChange={handleNicknameChange}
-                    onBlur={handleFinishEditing}
-                    onKeyDown={(e) => e.key === 'Enter' && handleFinishEditing()}
-                    autoFocus
-                    className="bg-gray-700 border border-gray-600 rounded-md p-1 text-center text-2xl font-bold text-white focus:ring-magenta-500 focus:border-magenta-500 w-48"
-                />
-            ) : (
-                <div className="flex items-center space-x-2 group">
-                    <h1 className="text-2xl font-bold text-white">{nickname}</h1>
-                     <button onClick={() => setIsEditing(true)} aria-label="Editar apelido" className="opacity-50 group-hover:opacity-100 transition-opacity">
-                        <Icon name="pencil" className="w-5 h-5 text-gray-400 hover:text-white" />
-                    </button>
-                </div>
-            )}
-            <p className="text-sm text-gray-400">Membro desde Nov 2023</p>
+        <div className="mx-4 mt-4 mb-6 rounded-[2rem] border border-gray-100 bg-[linear-gradient(180deg,#ffffff,#fff8f8)] p-6 text-center shadow-[0_24px_60px_-40px_rgba(244,63,94,0.45)]">
+            <div className="relative mb-4">
+                <button onClick={onViewImage} className="block rounded-full focus:outline-none focus:ring-4 focus:ring-rose-100">
+                    <img
+                      src={profileImageUrl}
+                      alt="User profile"
+                      className="w-28 h-28 rounded-full border border-gray-200 object-cover"
+                    />
+                </button>
+                 <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 bg-rose-500 p-2 rounded-full text-white hover:bg-rose-600 border-4 border-white transition-colors shadow-sm"
+                    aria-label="Alterar foto de perfil"
+                >
+                    <Icon name="pencil" className="w-4 h-4" />
+                </button>
+                <input type="file" ref={fileInputRef} onChange={handleImageSelect} accept="image/*" className="hidden" />
+            </div>
+
+            <div className="flex items-center space-x-2 group h-9 justify-center">
+                <h1 className="text-2xl font-bold text-gray-900">{nickname}</h1>
+                 <button onClick={onEditProfile} aria-label="Editar perfil" className="text-gray-400 hover:text-rose-500 transition-colors">
+                    <Icon name="pencil" className="w-4 h-4" />
+                </button>
+            </div>
+
+            <button 
+                onClick={onNavigateToFanArea}
+                className="mt-3 inline-flex items-center space-x-2 rounded-full border border-rose-100 bg-rose-50 px-4 py-2 shadow-sm"
+            >
+                <Icon name="users" className="w-4 h-4 text-rose-500" />
+                <span className="font-bold text-rose-600 text-sm">{fanPoints.toLocaleString('pt-BR')} Fan Points com {artistName}</span>
+                <Icon name="chevron-right" className="w-3 h-3 text-rose-400" />
+            </button>
         </div>
     );
 };
 
 
-const ProfileView: React.FC<ProfileViewProps> = ({ artist, onEditAddress, onEditPaymentMethod, onOpenPaymentHistory, onLogout }) => {
+const ProfileView: React.FC<ProfileViewProps> = ({ 
+    artist, fanPoints, onNavigateToFanArea, onOpenPaymentHistory, onLogout, onViewImage,
+    userNickname, userProfileImageUrl, onProfileImageChange, onEditAddress, onEditPaymentMethod
+}) => {
   
-  const [expandedPlan, setExpandedPlan] = useState<PlanType | null>(null);
-  const handleUnimplemented = () => alert("Funcionalidade em desenvolvimento.");
-
-  const currentPlan = artist.plans.find(p => p.type === PlanType.FULL_ACCESS) || artist.plans[0];
-  const otherPlans = artist.plans.filter(p => p.type !== currentPlan.type);
-
-  const handleTogglePlan = (planType: PlanType) => {
-    setExpandedPlan(prev => (prev === planType ? null : planType));
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editModalInitialTab, setEditModalInitialTab] = useState('personal');
+  const [verificationTarget, setVerificationTarget] = useState<'email' | 'phone' | null>(null);
+  const [isInfoModalVisible, setInfoModalVisible] = useState(false);
+  const { hasCard, orders, paymentHistory, purchasedExperiences, purchasedTickets } = useBilling();
+  const { email, emailVerified, internalUserId, phone, phoneVerified, setEmailVerified, setPhoneVerified } = useGlobalUserState();
+  
+  const handleUnimplemented = () => setInfoModalVisible(true);
+  
+  const openEditModal = (tab: string) => {
+    setEditModalInitialTab(tab);
+    setIsEditModalVisible(true);
   };
-
-
   return (
-    <div className="text-white space-y-6 pb-6">
-      <ProfileSummary />
+    <>
+    <div className="pb-6">
+      <ProfileSummary 
+          artistName={artist.name}
+          nickname={userNickname}
+          profileImageUrl={userProfileImageUrl}
+          fanPoints={fanPoints}
+          onProfileImageChange={onProfileImageChange}
+          onNavigateToFanArea={onNavigateToFanArea}
+          onViewImage={() => onViewImage(userProfileImageUrl)}
+          onEditProfile={() => openEditModal('personal')}
+      />
       
-      <div className="px-4 space-y-6">
-        <div className="bg-gray-800 p-4 rounded-2xl border border-gray-700">
-            <h3 className="text-lg font-bold text-white mb-2 px-2">Minha Conta</h3>
-             <SettingsItem icon="truck" title="Endereço de Entrega" subtitle="Rua dos Fãs, 123..." onClick={onEditAddress} />
-             <SettingsItem icon="credit-card" title="Métodos de Pagamento" subtitle="Mastercard **** 1234" onClick={onEditPaymentMethod} />
-        </div>
-
-        <div className="bg-gray-800 p-4 rounded-2xl border border-gray-700">
-            <h3 className="text-lg font-bold text-white mb-4 px-2">Minha Assinatura</h3>
-            <div className="bg-gradient-to-br from-magenta-500/20 to-gray-800/20 p-4 rounded-lg border border-magenta-500/50 mb-4">
-                <p className="text-sm text-gray-400">Seu plano atual com {artist.name}</p>
-                <p className="text-xl font-bold text-white">{currentPlan.type}</p>
-                <p className="text-md text-gray-300">R$ {currentPlan.price.toFixed(2).replace('.',',')} / mês</p>
-            </div>
-            <SettingsItem icon="document-text" title="Histórico de Pagamentos" subtitle="Ver faturas e cobranças" onClick={onOpenPaymentHistory} />
-             {otherPlans.length > 0 && (
-                <>
-                    <h4 className="text-md font-semibold text-gray-300 mt-6 mb-2 px-2">Outros planos disponíveis</h4>
-                     <div className="space-y-2">
-                        {otherPlans.map(plan => {
-                            const isUpgrade = plan.level > currentPlan.level;
-                            const isExpanded = expandedPlan === plan.type;
-
-                            const currentBenefits = new Set(currentPlan.benefits);
-                            const newBenefits = plan.benefits.filter(b => !currentBenefits.has(b));
-                            const lostBenefits = currentPlan.benefits.filter(b => !new Set(plan.benefits).has(b));
-
-                            return (
-                                <div key={plan.type} className="bg-gray-900/50 rounded-lg border border-gray-700 overflow-hidden">
-                                    <button onClick={() => handleTogglePlan(plan.type)} className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-700/20 transition-colors">
-                                        <div className="flex-1">
-                                            <p className="font-bold text-white">{plan.type}</p>
-                                            <p className="text-sm text-gray-400">R$ {plan.price.toFixed(2).replace('.',',')} / mês</p>
-                                        </div>
-                                         <span className={`text-xs font-bold px-2 py-1 rounded-full ${isUpgrade ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'}`}>
-                                            {isUpgrade ? 'UPGRADE' : 'DOWNGRADE'}
-                                        </span>
-                                        <Icon name="chevron-down" className={`w-5 h-5 text-gray-400 transition-transform duration-300 ml-3 ${isExpanded ? 'transform rotate-180' : ''}`} />
-                                    </button>
-                                    <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[500px]' : 'max-h-0'}`}>
-                                        <div className="px-4 pb-4 space-y-4">
-                                            {isUpgrade && newBenefits.length > 0 && (
-                                                <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg text-sm">
-                                                    <p className="font-bold text-green-300">Ao fazer o upgrade, você ganhará acesso a:</p>
-                                                    <ul className="list-disc list-inside text-green-200/80 mt-1">
-                                                        {newBenefits.map(b => <li key={b}>{b.replace('+ ', '')}</li>)}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                            {!isUpgrade && lostBenefits.length > 0 && (
-                                                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-sm">
-                                                    <p className="font-bold text-red-300">Atenção: Ao fazer o downgrade, você perderá acesso a:</p>
-                                                     <ul className="list-disc list-inside text-red-200/80 mt-1">
-                                                        {lostBenefits.map(b => <li key={b}>{b.replace('+ ', '')}</li>)}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                            <PlanCard plan={plan} onSubscribe={handleUnimplemented} />
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+      <div className="space-y-6 px-4">
+        
+        <Card className={`${sectionCardClassName} gap-0 p-5`}>
+            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Conta Principal</h3>
+            <div className="rounded-[1.75rem] border border-gray-100 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-4">
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">ID Interno</p>
+                        <p className="text-sm font-black text-gray-900 font-mono break-all">{internalUserId}</p>
+                        <p className="text-xs text-gray-500 mt-2">Esta conta vale para todos os artistas. Pagamentos, pedidos e ingressos ficam centralizados aqui.</p>
                     </div>
-                </>
-            )}
-             <button onClick={handleUnimplemented} className="w-full text-center text-sm text-red-400 hover:text-red-300 mt-4 p-2 rounded-lg hover:bg-red-500/10 transition-colors">
-                Cancelar Assinatura
-            </button>
+                    <div className="bg-white rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-gray-500 border border-gray-200 shrink-0">
+                        Conta Global
+                    </div>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-4">
+                    <VerificationPill label={emailVerified ? 'E-mail verificado' : 'Verificar e-mail'} verified={emailVerified} onClick={!emailVerified && email ? () => setVerificationTarget('email') : undefined} />
+                    <VerificationPill label={phoneVerified ? 'Telefone verificado' : 'Verificar telefone'} verified={phoneVerified} onClick={!phoneVerified && phone.number ? () => setVerificationTarget('phone') : undefined} />
+                </div>
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="bg-white rounded-2xl border border-gray-200 p-4">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">E-mail vinculado</p>
+                        <p className="text-sm font-bold text-gray-900 mt-2 break-all">{email || 'Nao informado'}</p>
+                    </div>
+                    <div className="bg-white rounded-2xl border border-gray-200 p-4">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Telefone vinculado</p>
+                        <p className="text-sm font-bold text-gray-900 mt-2">{phone.ddi} {phone.number || 'Nao informado'}</p>
+                    </div>
+                </div>
+            </div>
+        </Card>
+
+        <div className={`overflow-hidden ${sectionCardClassName}`}>
+             <div className="p-4 pb-2">
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Conta</h3>
+             </div>
+             <SettingsItem icon="profile" title="Dados da Conta" subtitle="Nome, apelido, perfil e dados cadastrais" onClick={() => openEditModal('personal')} />
+             <SettingsItem icon="truck" title="Endereço Principal" subtitle="Dados usados para compras e entregas da sua conta" onClick={onEditAddress} />
+        </div>
+
+        <Card className={`${sectionCardClassName} gap-0 p-5`}>
+            <div className="flex items-start justify-between gap-3 mb-5">
+                <div>
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Pagamento e Compras</h3>
+                    <p className="text-xs text-gray-500 mt-2">Tudo abaixo pertence a sua conta, independentemente do artista que estiver ativo.</p>
+                </div>
+                <div className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide ${hasCard ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {hasCard ? 'Pagamento ativo' : 'Sem pagamento salvo'}
+                </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mb-5">
+                <SummaryStat value={orders.length.toString()} label="Pedidos" />
+                <SummaryStat value={purchasedTickets.length.toString()} label="Ingressos" />
+                <SummaryStat value={purchasedExperiences.length.toString()} label="Experiências" />
+            </div>
+            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold text-gray-600">Recibos e cobranças emitidos</span>
+                    <span className="font-black text-gray-900">{paymentHistory.length}</span>
+                </div>
+            </div>
+        </Card>
+
+        <div className={`overflow-hidden ${sectionCardClassName}`}>
+             <div className="p-4 pb-2">
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Financeiro</h3>
+             </div>
+             <SettingsItem icon="credit-card" title="Métodos de Pagamento" subtitle={hasCard ? 'Seu meio de pagamento vale para compras em qualquer artista' : 'Cadastre um método para comprar em qualquer artista'} onClick={onEditPaymentMethod} />
+             <SettingsItem icon="document-text" title="Histórico Financeiro" subtitle="Faturas, recibos e cobranças globais da conta" onClick={onOpenPaymentHistory} />
+        </div>
+
+        <div className={`overflow-hidden ${sectionCardClassName}`}>
+             <div className="p-4 pb-2">
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Sobre</h3>
+             </div>
+             <SettingsItem icon="document-text" title="Termos de Serviço" onClick={handleUnimplemented} />
+             <SettingsItem icon="lock-closed" title="Política de Privacidade" onClick={handleUnimplemented} />
         </div>
         
-        <div className="bg-gray-800 p-4 rounded-2xl border border-gray-700">
-            <h3 className="text-lg font-bold text-white mb-2 px-2">Legal</h3>
-            <SettingsItem icon="document-text" title="Termos de Serviço" onClick={handleUnimplemented} />
-            <SettingsItem icon="lock-closed" title="Política de Privacidade" onClick={handleUnimplemented} />
-        </div>
-        
-        <button
+        <Button
             onClick={onLogout}
-            className="w-full bg-gray-700/80 text-red-400 font-bold py-3 px-4 rounded-lg hover:bg-red-500/10 transition-colors flex items-center justify-center space-x-2"
+            variant="outline"
+            className="h-14 w-full rounded-2xl border-rose-100 bg-white font-black text-rose-500 shadow-sm hover:bg-rose-50 hover:text-rose-600"
         >
             <Icon name="logout" className="w-5 h-5" />
             <span>Sair da Conta</span>
-        </button>
+        </Button>
 
       </div>
     </div>
+    <EditProfileModal
+        isVisible={isEditModalVisible}
+        onClose={() => setIsEditModalVisible(false)}
+        initialTab={editModalInitialTab}
+    />
+    <ContactVerificationModal
+        isVisible={verificationTarget === 'email'}
+        type="email"
+        value={email}
+        onClose={() => setVerificationTarget(null)}
+        onVerified={() => {
+            setEmailVerified(true);
+            setVerificationTarget(null);
+        }}
+    />
+    <ContactVerificationModal
+        isVisible={verificationTarget === 'phone'}
+        type="phone"
+        value={`${phone.ddi} ${phone.number}`.trim()}
+        onClose={() => setVerificationTarget(null)}
+        onVerified={() => {
+            setPhoneVerified(true);
+            setVerificationTarget(null);
+        }}
+    />
+    <ModalShell
+        open={isInfoModalVisible}
+        onClose={() => setInfoModalVisible(false)}
+        variant="dialog"
+        className="max-w-sm"
+    >
+        <ModalBody className="px-6 pb-4 pt-6 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-blue-500">
+                <Icon name="question-mark-circle" className="h-8 w-8" />
+            </div>
+            <ModalTitle className="mb-2 text-[1.7rem] leading-none">Em desenvolvimento</ModalTitle>
+            <p className="text-sm font-medium leading-relaxed text-muted-foreground">
+                Esta funcionalidade será liberada nas próximas versões.
+            </p>
+        </ModalBody>
+        <ModalFooter className="px-6 pb-6 pt-0">
+            <Button onClick={() => setInfoModalVisible(false)} className="h-12 w-full rounded-2xl text-sm font-black">
+                Entendi
+            </Button>
+        </ModalFooter>
+    </ModalShell>
+    </>
   );
 };
 

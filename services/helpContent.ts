@@ -1,3 +1,4 @@
+
 import { FAQ, HelpTopic } from '../types';
 
 export const helpContent: { [key: string]: HelpTopic } = {
@@ -210,11 +211,11 @@ export const helpContent: { [key: string]: HelpTopic } = {
       },
       {
         question: "Não encontrei minha dúvida aqui. O que faço?",
-        answer: "Se sua dúvida não foi respondida, por favor, entre em contato com nosso suporte através do email ajuda@superfans.app."
+        answer: "Se sua dúvida não foi respondida, por favor, entre em contato com nosso suporte através do email ajuda@clser.app."
       },
       {
         question: "Como posso sugerir uma nova funcionalidade?",
-        answer: "Adoramos ouvir nossos usuários! Envie suas sugestões para o email sugestoes@superfans.app e nossa equipe irá analisar."
+        answer: "Adoramos ouvir nossos usuários! Envie suas sugestões para o email sugestoes@clser.app e nossa equipe irá analisar."
       }
     ]
   }

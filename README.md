@@ -1,19 +1,22 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Clser
 
-# Run and deploy your AI Studio app
+Aplicacao React + Vite para explorar experiencias, conteudo e comunidade entre artistas e fas.
 
-This contains everything you need to run your app locally.
+## Scripts
 
-View your app in AI Studio: https://ai.studio/apps/drive/1l4VDaWC1DnMQq0W0ey1OclZYQGOfg6S6
+- `npm install`
+- `npm run dev`
+- `npm run build`
+- `npm run preview`
 
-## Run Locally
+## Estrutura atual
 
-**Prerequisites:**  Node.js
+- `App.tsx` coordena a escolha entre fluxo de fa e fluxo de artista.
+- `hooks/useGlobalUserState.ts` persiste o estado global do usuario.
+- `hooks/usePersistentArtistState.ts` persiste o estado por artista.
+- `services/mockApiService.ts` concentra os dados simulados usados pela interface.
 
+## Observacoes
 
-1. Install dependencies:
-   `npm install`
-2. Run the app:
-   `npm run dev`
+- O projeto nao depende mais de Google AI Studio nem de `GEMINI_API_KEY`.
+- Ainda existe oportunidade de dividir arquivos grandes como `App.tsx` e `components/ArtistPage.tsx`.

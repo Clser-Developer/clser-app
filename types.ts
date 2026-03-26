@@ -1,5 +1,4 @@
 
-
 export enum PostType {
   TEXT = 'TEXT',
   IMAGE = 'IMAGE',
@@ -56,17 +55,38 @@ export interface CartItem extends MerchItem {
   selectedColor?: string;
 }
 
+export interface TicketTier {
+    name: string;
+    price: number;
+}
+
+export interface TicketSelection {
+    tier: TicketTier;
+    quantity: number;
+}
+
+export enum EventStatus {
+    AVAILABLE = 'AVAILABLE',
+    SOLD_OUT = 'SOLD_OUT',
+    PAST = 'PAST',
+}
 
 export interface Event {
   id: string;
   artistId: string;
   name: string;
   date: string;
+  time: string;
   location: string;
+  fullAddress: string;
   imageUrl: string;
-  ticketPrice: number;
+  startingPrice: number;
   isExclusive: boolean;
+  mapImageUrl?: string;
+  ticketTiers: TicketTier[];
+  status: EventStatus;
 }
+
 
 export interface PurchasedTicket extends Event {
     purchaseId: string;
@@ -93,8 +113,15 @@ export interface Artist {
   bio: string;
   profileImageUrl: string;
   coverImageUrl: string;
-  plans: Plan[];
-  fanPoints?: number; // Optional as it's for subscribed fans
+  plans: Plan[]; // Mantido para compatibilidade, mas agora usado como "Benefícios do Clube"
+  fanPoints?: number; 
+  cardAnuityPrice?: number; // Preço da anuidade do cartão
+}
+
+export interface ArtistMembership {
+  artistId: string;
+  joinedAt: string;
+  status: 'active';
 }
 
 export enum Section {
@@ -103,6 +130,15 @@ export enum Section {
     FAN_AREA = 'fan_area',
     STORE = 'store',
     PROFILE = 'profile'
+}
+
+// Novos tipos para o App do Artista (Backstage)
+export enum ArtistSection {
+    DASHBOARD = 'dashboard',
+    STUDIO = 'studio',
+    COMMUNITY = 'community',
+    SALES = 'sales',
+    MENU = 'menu'
 }
 
 export enum StoreSection {
@@ -143,6 +179,7 @@ export interface TrackingEvent {
 
 export interface Order {
     id: string;
+    artistId: string;
     date: string;
     status: OrderStatus;
     items: OrderItem[];
@@ -153,18 +190,31 @@ export interface Order {
 }
 
 // Tipos para Histórico de Pagamento
+export enum TransactionType {
+    SUBSCRIPTION = 'Anuidade Cartão',
+    MERCH = 'Compra de Produto',
+    TICKET = 'Compra de Ingresso',
+    DONATION = 'Doação',
+    AUCTION = 'Lance em Leilão',
+    EXPERIENCE = 'Compra de Experiência',
+    PPV = 'Conteúdo Pay-per-view'
+}
+
 export interface PaymentRecord {
   id: string;
+  artistId?: string;
   date: string;
-  planName: PlanType;
+  type: TransactionType;
+  title: string;
   amount: number;
-  status: 'Pago';
-  invoiceUrl: string; // Para simular download
+  status: 'Pago' | 'Pendente';
+  invoiceUrl: string; 
   items: {
     description: string;
     amount: number;
   }[];
   paymentMethod: string;
+  planName?: PlanType; 
 }
 
 
@@ -217,16 +267,16 @@ export interface AuctionItem {
     startingPrice: number;
     currentBid: number;
     bidIncrement: number;
-    endTime: string; // ISO 8601 string for easier date parsing
+    endTime: string; 
     bids: Bid[];
     highestBidderName?: string;
 }
 
 // Tipos para Gamificação e Recompensas
 export enum RewardType {
-    SWEEPSTAKE = 'SWEEPSTAKE', // Sorteio para os N melhores fãs
-    PRIZE = 'PRIZE',           // Recompensa direta para os N melhores fãs
-    OFFER = 'OFFER',           // Oferta para fãs com >= X pontos
+    SWEEPSTAKE = 'SWEEPSTAKE', 
+    PRIZE = 'PRIZE',           
+    OFFER = 'OFFER',           
 }
 
 export interface ExclusiveReward {
@@ -237,10 +287,35 @@ export interface ExclusiveReward {
     description: string;
     imageUrl: string;
     eligibility: {
-        rank?: number;   // Para SWEEPSTAKE e PRIZE (ex: Top 100)
-        points?: number; // Para OFFER (ex: 15000+ pontos)
+        rank?: number;   
+        points?: number; 
     };
 }
+
+// Tipos para Mural
+export interface MuralPost {
+  id: string;
+  artistId: string;
+  imageUrl: string;
+  fanName: string;
+  fanAvatarUrl: string;
+  caption: string;
+  likes: number;
+  timestamp: string; 
+}
+
+// Tipos para Galeria de Arte
+export interface FanArtPost {
+  id: string;
+  artistId: string;
+  imageUrl: string;
+  fanName: string;
+  fanAvatarUrl: string;
+  caption: string;
+  likes: number;
+  timestamp: string; 
+}
+
 
 // Tipos para Mídia
 export enum MediaType {
@@ -259,10 +334,12 @@ export interface MediaItem {
   platform: MediaPlatform;
   type: MediaType;
   title: string;
-  source: string; // Canal do Youtube ou Artista no Spotify
+  source: string; 
   imageUrl: string;
   externalUrl: string;
   duration: string;
+  isPPV?: boolean; // Novo campo para Pay Per View
+  price?: number; // Preço se for PPV
 }
 
 // Tipos para Central de Ajuda
@@ -275,4 +352,90 @@ export interface HelpTopic {
   title: string;
   videoTutorialUrl: string;
   faqs: FAQ[];
+}
+
+// Tipos para Vaquinha (Crowdfunding)
+export interface VaquinhaCampaign {
+  id: string;
+  artistId: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  goalAmount: number;
+  currentAmount: number;
+  supporterCount: number;
+  endDate?: string; 
+}
+
+// Tipos para Grupos de Fãs
+export interface ChatMessage {
+  id: string;
+  authorName: string;
+  authorImageUrl: string;
+  text: string;
+  timestamp: string;
+  isCurrentUser?: boolean;
+}
+
+export interface FanGroup {
+  id: string;
+  artistId: string;
+  eventId: string; 
+  eventName: string;
+  name: string;
+  description: string;
+  memberCount: number;
+  coverImageUrl: string;
+  messages: ChatMessage[];
+}
+
+// Tipos para Experiências
+export interface ExperienceItem {
+    id: string;
+    artistId: string;
+    name: string;
+    description: string;
+    longDescription?: string;
+    imageUrl: string;
+    price: number;
+    participantLimit: number;
+    participantsJoined: number;
+    format: 'Online (via App)' | 'Presencial';
+    duration: string;
+    rules: string[];
+    eventDate: string;
+    eventTime: string;
+    location: string;
+}
+
+export interface PurchasedExperience extends ExperienceItem {
+    purchaseId: string;
+}
+
+// Tipos para Dados do Usuário
+export interface UserAddress {
+  cep: string;
+  street: string;
+  number: string;
+  complement: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+}
+
+export interface UserPhone {
+  ddi: string;
+  number: string;
+}
+
+export interface UserDemographics {
+    birthDate: string;
+    city: string;
+    gender: 'Masculino' | 'Feminino' | 'Outro' | 'Prefiro não dizer' | '';
+}
+
+export interface AccountIdentity {
+  internalUserId: string;
+  emailVerified: boolean;
+  phoneVerified: boolean;
 }

@@ -1,6 +1,6 @@
 
 
-import { Artist, Post, PostType, MerchItem, Event, Plan, PlanType, FanProfile, Comment, AuctionItem, ExclusiveReward, RewardType, MediaItem, MediaType, MediaPlatform, Section, StoreSection, FanAreaSection, PaymentRecord } from '../types';
+import { Artist, Post, PostType, MerchItem, Event, Plan, PlanType, FanProfile, Comment, AuctionItem, ExclusiveReward, RewardType, MediaItem, MediaType, MediaPlatform, Section, StoreSection, FanAreaSection, PaymentRecord, EventStatus, MuralPost, FanArtPost, VaquinhaCampaign, TransactionType, FanGroup, ExperienceItem } from '../types';
 import { getFanLevel } from './gamificationService';
 
 const artists: Artist[] = [
@@ -66,7 +66,7 @@ const posts: Post[] = [
         artistId: 'lia',
         type: PostType.IMAGE,
         text: 'Alô, galera de São Paulo! Notícia quentíssima: tem show novo na área! Os ingressos já estão disponíveis. Não vai ficar de fora, né? Garanta já o seu!',
-        mediaUrl: 'https://picsum.photos/seed/lia-event1/800/400',
+        mediaUrl: 'https://i.ibb.co/5XCRnpPk/Captura-de-Tela-2025-09-17-s-23-00-09.png',
         likes: 4200,
         comments: 0,
         timestamp: 'Há 1 hora',
@@ -77,9 +77,44 @@ const posts: Post[] = [
             targetItemId: 'e1',
         }
     },
+    { 
+        id: 'p17', 
+        artistId: 'lia', 
+        type: PostType.POLL, 
+        text: "Alô, Goiânia! Tô montando o setlist pro nosso próximo encontro e quero a ajuda de vocês. Qual combinação não pode faltar?", 
+        pollOptions: ['Sonho Real + Estelar', 'Noite Estrelada + Acústico', 'Caminhos + Surpresas', 'Medley das Antigas'], 
+        pollVotes: [410, 250, 180, 320],
+        userVotedOptionIndex: null, 
+        likes: 2200, 
+        comments: 0, 
+        timestamp: 'Há 45 minutos',
+        link: {
+            text: 'Votar no setlist',
+            targetSection: Section.FAN_AREA,
+            targetSubSection: FanAreaSection.POLLS,
+            targetItemId: 'p17',
+        }
+    },
     { id: 'p1', artistId: 'lia', type: PostType.IMAGE, text: 'Bastidores da gravação do novo clipe! Ansiosos?', mediaUrl: 'https://i.ibb.co/4nrRx6wC/foto-1.png', likes: 1200, comments: 2, timestamp: 'Há 2 horas' },
     { id: 'p2', artistId: 'lia', type: PostType.VIDEO, text: 'Uma palhinha da nova música pra vocês ❤️', mediaUrl: 'https://picsum.photos/seed/lia-post2/600/400', likes: 2500, comments: 1, timestamp: 'Há 1 dia' },
-    { id: 'p3', artistId: 'lia', type: PostType.POLL, text: 'Qual música não pode faltar no próximo show?', pollOptions: ['Sonho Real', 'Noite Estrelada', 'Caminhos', 'Outra (comente!)'], pollVotes: [150, 300, 250, 100], userVotedOptionIndex: null, likes: 800, comments: 0, timestamp: 'Há 2 dias' },
+    { 
+        id: 'p3', 
+        artistId: 'lia', 
+        type: PostType.POLL, 
+        text: 'Qual música não pode faltar no próximo show?', 
+        pollOptions: ['Sonho Real', 'Noite Estrelada', 'Caminhos', 'Outra (comente!)'], 
+        pollVotes: [150, 300, 250, 100], 
+        userVotedOptionIndex: null, 
+        likes: 800, 
+        comments: 0, 
+        timestamp: 'Há 2 dias',
+        link: {
+            text: 'Ver e votar na enquete',
+            targetSection: Section.FAN_AREA,
+            targetSubSection: FanAreaSection.POLLS,
+            targetItemId: 'p3',
+        }
+    },
     { id: 'p10', artistId: 'lia', type: PostType.IMAGE, text: 'Pausa pro sorvete pra recarregar as energias! Qual o sabor preferido de vocês? 🍦☀️', mediaUrl: 'https://i.ibb.co/fY9Y9DGq/charles-foto-whisk-sorvete.jpg', likes: 3200, comments: 0, timestamp: 'Há 3 dias'},
     { id: 'p11', artistId: 'lia', type: PostType.IMAGE, text: 'Nada como um dia no campo pra clarear as ideias e compor umas moda nova. A inspiração vem da simplicidade!', mediaUrl: 'https://i.ibb.co/Dfz9J6Rn/charles-foto-whisk-timeline-passeio-no-campo.jpg', likes: 2800, comments: 0, timestamp: 'Há 4 dias'},
     { id: 'p12', artistId: 'lia', type: PostType.IMAGE, text: 'Tbt de uma roda de viola boa demais com os amigos. A música conecta a gente!', mediaUrl: 'https://i.ibb.co/Tx3FY7wc/charles-foto-whisk-timeline-roda-de-viola.jpg', likes: 4100, comments: 0, timestamp: 'Há 5 dias'},
@@ -191,9 +226,135 @@ const merch: MerchItem[] = [
 ];
 
 const events: Event[] = [
-    { id: 'e1', artistId: 'lia', name: 'Show de Lançamento "Estelar"', date: '25 DEZ', location: 'São Paulo, SP', imageUrl: 'https://picsum.photos/seed/lia-event1/800/400', ticketPrice: 150, isExclusive: true },
-    { id: 'e2', artistId: 'lia', name: 'Meet & Greet Exclusivo', date: '26 DEZ', location: 'São Paulo, SP', imageUrl: 'https://picsum.photos/seed/lia-event2/800/400', ticketPrice: 400, isExclusive: true },
-    { id: 'e3', artistId: 'kai', name: 'Sessão Acústica "Vibes"', date: '15 JAN', location: 'Rio de Janeiro, RJ', imageUrl: 'https://picsum.photos/seed/kai-event1/800/400', ticketPrice: 120, isExclusive: true },
+    { 
+        id: 'e6', 
+        artistId: 'lia', 
+        name: 'Pocket Show Secreto', 
+        date: '05 MAR 2025', 
+        time: '22:00',
+        location: 'Rio de Janeiro, RJ', 
+        fullAddress: 'Blue Note Rio - Av. Atlântica, 1910 - Copacabana, Rio de Janeiro - RJ',
+        imageUrl: 'https://i.ibb.co/N1W7XkS/charles-show-rio.png', 
+        startingPrice: 500, 
+        isExclusive: true,
+        mapImageUrl: 'https://i.ibb.co/hKz228j/mapa-show-rio.png',
+        status: EventStatus.AVAILABLE,
+        ticketTiers: [
+            { name: 'Ingresso Único', price: 500 },
+        ]
+    },
+    { 
+        id: 'e1', 
+        artistId: 'lia', 
+        name: 'Show de Lançamento "Estelar"', 
+        date: '25 ABR 2025', 
+        time: '21:00',
+        location: 'São Paulo, SP', 
+        fullAddress: 'Allianz Parque - Av. Francisco Matarazzo, 1705 - Água Branca, São Paulo - SP',
+        imageUrl: 'https://i.ibb.co/5XCRnpPk/Captura-de-Tela-2025-09-17-s-23-00-09.png', 
+        startingPrice: 150, 
+        isExclusive: true,
+        mapImageUrl: 'https://i.ibb.co/wJMyzSg/mapa-show-sao-paulo.png',
+        status: EventStatus.AVAILABLE,
+        ticketTiers: [
+            { name: 'Pista', price: 150 },
+            { name: 'Pista Premium', price: 300 },
+            { name: 'Cadeira Inferior', price: 250 },
+            { name: 'Cadeira Superior', price: 200 },
+        ]
+    },
+     { 
+        id: 'e5', 
+        artistId: 'lia', 
+        name: 'Acústico "Entre Amigos"', 
+        date: '22 MAI 2025', 
+        time: '19:00',
+        location: 'Belo Horizonte, MG', 
+        fullAddress: 'Palácio das Artes - Av. Afonso Pena, 1537 - Centro, Belo Horizonte - MG',
+        imageUrl: 'https://i.ibb.co/7YyWbVf/charles-show-bh.png', 
+        startingPrice: 120, 
+        isExclusive: true,
+        mapImageUrl: 'https://i.ibb.co/B6cgyLg/mapa-show-bh.png',
+        status: EventStatus.AVAILABLE,
+        ticketTiers: [
+            { name: 'Plateia B', price: 120 },
+            { name: 'Plateia A', price: 200 },
+            { name: 'Balcão', price: 150 },
+        ]
+    },
+    { 
+        id: 'e4', 
+        artistId: 'lia', 
+        name: 'Turnê "Sinta a Vibe"', 
+        date: '10 JUN 2025', 
+        time: '20:30',
+        location: 'Brasília, DF', 
+        fullAddress: 'Arena BRB Mané Garrincha - SRPN - Asa Norte, Brasília - DF',
+        imageUrl: 'https://i.ibb.co/zXn2D9g/charles-show-brasilia.png', 
+        startingPrice: 180, 
+        isExclusive: true,
+        mapImageUrl: 'https://i.ibb.co/4M4DkC9/mapa-show-brasilia.png',
+        status: EventStatus.AVAILABLE,
+        ticketTiers: [
+            { name: 'Pista', price: 180 },
+            { name: 'Pista Premium', price: 350 },
+            { name: 'Cadeira Inferior', price: 280 },
+            { name: 'Camarote Open Bar', price: 600 },
+        ]
+    },
+    { 
+        id: 'e2', 
+        artistId: 'lia', 
+        name: 'Meet & Greet Exclusivo', 
+        date: '26 JUL 2025', 
+        time: '18:00',
+        location: 'São Paulo, SP', 
+        fullAddress: 'Hotel Hilton Morumbi, Sala de Conferências - Av. das Nações Unidas, 12901 - Brooklin, São Paulo - SP',
+        imageUrl: 'https://i.ibb.co/5XCRnpPk/Captura-de-Tela-2025-09-17-s-23-00-09.png', 
+        startingPrice: 400, 
+        isExclusive: true,
+        status: EventStatus.SOLD_OUT,
+        ticketTiers: [
+            { name: 'Ingresso Individual', price: 400 },
+            { name: 'Pacote Duplo', price: 700 },
+        ]
+    },
+    { 
+        id: 'e3', 
+        artistId: 'kai', 
+        name: 'Sessão Acústica "Vibes"', 
+        date: '15 AGO 2025', 
+        time: '20:00',
+        location: 'Rio de Janeiro, RJ', 
+        fullAddress: 'Circo Voador - R. dos Arcos, s/n - Lapa, Rio de Janeiro - RJ',
+        imageUrl: 'https://picsum.photos/seed/kai-event1/800/400', 
+        startingPrice: 120, 
+        isExclusive: true,
+        mapImageUrl: 'https://i.ibb.co/wJMyzSg/mapa-show-sao-paulo.png',
+        status: EventStatus.AVAILABLE,
+        ticketTiers: [
+            { name: 'Pista', price: 120 },
+            { name: 'Mezanino', price: 180 },
+        ]
+    },
+     { 
+        id: 'e7-past', 
+        artistId: 'lia', 
+        name: 'Show de Encerramento', 
+        date: '15 DEZ 2024', 
+        time: '20:00',
+        location: 'Salvador, BA', 
+        fullAddress: 'Concha Acústica do TCA - Praça Dois de Julho - Campo Grande, Salvador - BA',
+        imageUrl: 'https://i.ibb.co/nMSJkXB/charles-show-salvador.png', 
+        startingPrice: 160, 
+        isExclusive: true,
+        mapImageUrl: 'https://i.ibb.co/wJMyzSg/mapa-show-sao-paulo.png',
+        status: EventStatus.PAST,
+        ticketTiers: [
+            { name: 'Pista', price: 160 },
+            { name: 'Camarote', price: 320 },
+        ]
+    },
 ];
 
 const twoDaysFromNow = new Date();
@@ -234,6 +395,75 @@ const auctions: AuctionItem[] = [
              { bidderName: 'LyricLover', amount: 750, timestamp: 'Há 45 minutos' },
              { bidderName: 'MusicLover22', amount: 800, timestamp: 'Há 12 minutos' },
         ],
+    }
+];
+
+const experiences: ExperienceItem[] = [
+    {
+        id: 'exp1',
+        artistId: 'lia',
+        name: 'Encontro Virtual com Charles',
+        description: 'Converse ao vivo com o Charles em uma chamada de vídeo exclusiva dentro do app.',
+        longDescription: 'Uma oportunidade única de conversar ao vivo com o Charles, tirar suas dúvidas e interagir com ele e outros fãs em uma chamada de vídeo exclusiva. A experiência acontece diretamente pelo app, garantindo um ambiente seguro e intimista.',
+        imageUrl: 'https://i.ibb.co/DPMZYcBg/live-com-charles.png',
+        price: 2000,
+        participantLimit: 6,
+        participantsJoined: 2,
+        format: 'Online (via App)',
+        duration: '20 minutos',
+        rules: [ "A sala virtual será aberta 5 minutos antes do horário.", "Mantenha seu microfone mutado quando não estiver falando.", "Seja respeitoso com o artista e os outros participantes.", "A gravação da chamada não é permitida.", "O link de acesso será disponibilizado na área de 'Minhas Compras' 1 hora antes." ],
+        eventDate: '15 AGO 2025',
+        eventTime: '19:00',
+        location: 'Online'
+    },
+    {
+        id: 'exp2',
+        artistId: 'lia',
+        name: 'Show em SP: Palco + Camarote',
+        description: 'Assista ao show de São Paulo do palco e tenha acesso exclusivo ao camarim.',
+        longDescription: 'Viva a emoção de assistir ao show de São Paulo diretamente do palco, ao lado do Charles e sua banda. Sinta a energia do público de uma perspectiva única! A experiência também inclui acesso exclusivo ao camarim antes do show para fotos e um bate-papo com o artista.',
+        imageUrl: 'https://i.ibb.co/5XCRnpPk/Captura-de-Tela-2025-09-17-s-23-00-09.png',
+        price: 20000,
+        participantLimit: 5,
+        participantsJoined: 1,
+        format: 'Presencial',
+        duration: 'Show completo + 30 min no camarim',
+        rules: [ "Válido para o show do dia 25 de Abril de 2025 em São Paulo (Allianz Parque).", "O encontro no camarim acontecerá 1 hora antes do início do show.", "Transporte e hospedagem não inclusos.", "Proibido o uso de celulares com flash durante a apresentação no palco.", "Sujeito a verificação de identidade e idade (+18)." ],
+        eventDate: '25 ABR 2025',
+        eventTime: '21:00',
+        location: 'São Paulo, SP'
+    }
+];
+
+const fanGroups: FanGroup[] = [
+    {
+        id: 'fg1',
+        artistId: 'lia',
+        eventId: 'e1',
+        eventName: 'Show de Lançamento "Estelar"',
+        name: 'Galera de SP pro show "Estelar"!',
+        description: 'Grupo pra galera de São Paulo e região que vai no show de lançamento do álbum "Estelar"! Bora combinar carona, comprar uma van, ou marcar de se encontrar na porta!',
+        memberCount: 42,
+        coverImageUrl: 'https://i.ibb.co/5XCRnpPk/Captura-de-Tela-2025-09-17-s-23-00-09.png',
+        messages: [
+            { id: 'm1', authorName: 'Carla S.', authorImageUrl: 'https://picsum.photos/seed/fan-carla/100/100', text: 'E aí, pessoal! Alguém saindo da Zona Sul pra rachar um Uber?', timestamp: 'Há 2 horas' },
+            { id: 'm2', authorName: 'Marcos V.', authorImageUrl: 'https://picsum.photos/seed/fan-marcos/100/100', text: 'Opa, eu sou da ZS! Me add aí, Carla!', timestamp: 'Há 1 hora' },
+            { id: 'm3', authorName: 'Juliana P.', authorImageUrl: 'https://picsum.photos/seed/fan-juliana/100/100', text: 'Gente, e se a gente fechasse uma van? Se juntar uns 10 já compensa!', timestamp: 'Há 30 minutos' },
+        ]
+    }
+];
+
+const vaquinhaCampaigns: VaquinhaCampaign[] = [
+    {
+        id: 'vq1',
+        artistId: 'lia',
+        title: 'Ajude Bogonga do Sul - RS',
+        description: 'Nossa cidade irmã, Bogonga do Sul, no Rio Grande do Sul, foi devastada por uma terrível enchente após dias de chuva incessante. Famílias perderam tudo, e a cidade precisa se reerguer. Toda doação, de qualquer valor, faz uma enorme diferença para levar esperança e ajuda para quem mais precisa. Vamos juntos mostrar a força da nossa comunidade!',
+        imageUrl: 'https://i.ibb.co/sJV03Csh/chuva-no-sul.png',
+        goalAmount: 50000,
+        currentAmount: 22540,
+        supporterCount: 482,
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
     }
 ];
 
@@ -308,41 +538,82 @@ const paymentHistory: PaymentRecord[] = [
   {
     id: 'INV-2024-03',
     date: '01/03/2024',
+    type: TransactionType.SUBSCRIPTION,
+    title: 'Assinatura Fã Clube Charles',
     planName: PlanType.FULL_ACCESS,
     amount: 39.90,
     status: 'Pago',
     invoiceUrl: '#',
     paymentMethod: 'Mastercard **** 1234',
     items: [
-      { description: 'Assinatura Fã Clube Charles - Acesso Amplo (Mar/2024)', amount: 39.90 }
+      { description: 'Plano Acesso Amplo (Mar/2024)', amount: 39.90 }
     ]
   },
   {
     id: 'INV-2024-02',
     date: '01/02/2024',
+    type: TransactionType.SUBSCRIPTION,
+    title: 'Assinatura Fã Clube Charles',
     planName: PlanType.FULL_ACCESS,
     amount: 39.90,
     status: 'Pago',
     invoiceUrl: '#',
     paymentMethod: 'Mastercard **** 1234',
     items: [
-      { description: 'Assinatura Fã Clube Charles - Acesso Amplo (Fev/2024)', amount: 39.90 }
+      { description: 'Plano Acesso Amplo (Fev/2024)', amount: 39.90 }
     ]
   },
   {
     id: 'INV-2024-01',
     date: '01/01/2024',
+    type: TransactionType.SUBSCRIPTION,
+    title: 'Assinatura Fã Clube Charles',
     planName: PlanType.FULL_ACCESS,
     amount: 39.90,
     status: 'Pago',
     invoiceUrl: '#',
     paymentMethod: 'Mastercard **** 1234',
     items: [
-      { description: 'Assinatura Fã Clube Charles - Acesso Amplo (Jan/2024)', amount: 39.90 }
+      { description: 'Plano Acesso Amplo (Jan/2024)', amount: 39.90 }
     ]
   }
 ];
 
+const today = new Date();
+const yesterday = new Date();
+yesterday.setDate(today.getDate() - 1);
+const twoDaysAgo = new Date();
+twoDaysAgo.setDate(today.getDate() - 2);
+
+const fanNamesForMural = ['SuperFan99', 'MusicLover22', 'StarGazer', 'BeatMaster', 'LyricLover', 'RhythmRider', 'PopPrince', 'IndieSoul', 'GrooveGuru'];
+
+const muralPosts: MuralPost[] = [
+    // Today's Posts
+    { id: 'mp1', artistId: 'lia', imageUrl: 'https://i.ibb.co/84t1YbHc/charles-fan-01.png', fanName: fanNamesForMural[0], fanAvatarUrl: `https://picsum.photos/seed/fan1/100/100`, caption: 'Sonho realizado em encontrar o Charles!', likes: 152, timestamp: today.toISOString() },
+    { id: 'mp2', artistId: 'lia', imageUrl: 'https://i.ibb.co/35pgY1Wc/charles-fan-02.png', fanName: fanNamesForMural[1], fanAvatarUrl: `https://picsum.photos/seed/fan2/100/100`, caption: 'Que show incrível! Energia contagiante!', likes: 230, timestamp: today.toISOString() },
+    { id: 'mp3', artistId: 'lia', imageUrl: 'https://i.ibb.co/07fq12c/charles-fan-03.png', fanName: fanNamesForMural[2], fanAvatarUrl: `https://picsum.photos/seed/fan3/100/100`, caption: 'Minha camiseta autografada! Nunca vou lavar haha', likes: 189, timestamp: today.toISOString() },
+    // Yesterday's Posts
+    { id: 'mp4', artistId: 'lia', imageUrl: 'https://i.ibb.co/Kz5g4xMG/charles-fan-04.png', fanName: fanNamesForMural[3], fanAvatarUrl: `https://picsum.photos/seed/fan4/100/100`, caption: 'O melhor dia da minha vida!', likes: 310, timestamp: yesterday.toISOString() },
+    { id: 'mp5', artistId: 'lia', imageUrl: 'https://i.ibb.co/995qpf0x/charles-fan-05.png', fanName: fanNamesForMural[4], fanAvatarUrl: `https://picsum.photos/seed/fan5/100/100`, caption: 'Olha quem eu encontrei no aeroporto!', likes: 450, timestamp: yesterday.toISOString() },
+    { id: 'mp6', artistId: 'lia', imageUrl: 'https://i.ibb.co/F4Nyx2Rc/charles-fan-06.png', fanName: fanNamesForMural[5], fanAvatarUrl: `https://picsum.photos/seed/fan6/100/100`, caption: 'Valeu cada segundo de espera na fila.', likes: 280, timestamp: yesterday.toISOString() },
+    // Two Days Ago Posts
+    { id: 'mp7', artistId: 'lia', imageUrl: 'https://i.ibb.co/v6sHcVjr/charles-fan-07.png', fanName: fanNamesForMural[6], fanAvatarUrl: `https://picsum.photos/seed/fan7/100/100`, caption: 'Simpatia em pessoa!', likes: 521, timestamp: twoDaysAgo.toISOString() },
+    { id: 'mp8', artistId: 'lia', imageUrl: 'https://i.ibb.co/hxLC3M7L/charles-fan-08.png', fanName: fanNamesForMural[7], fanAvatarUrl: `https://picsum.photos/seed/fan8/100/100`, caption: 'Ainda sem acreditar nesse momento.', likes: 412, timestamp: twoDaysAgo.toISOString() },
+    { id: 'mp9', artistId: 'lia', imageUrl: 'https://i.ibb.co/fYXH2sC7/charles-fan-09.png', fanName: fanNamesForMural[8], fanAvatarUrl: `https://picsum.photos/seed/fan9/100/100`, caption: 'Obrigado pelo carinho, Charles!', likes: 356, timestamp: twoDaysAgo.toISOString() },
+];
+
+const fanArtPosts: FanArtPost[] = [
+    { 
+        id: 'fa1', 
+        artistId: 'lia', 
+        imageUrl: 'https://i.ibb.co/27Pm6XV2/charles-fan-art.png', 
+        fanName: 'ArteDoFã', 
+        fanAvatarUrl: `https://picsum.photos/seed/fan-art1/100/100`, 
+        caption: 'Fiz a caricatura do meu ídolo.', 
+        likes: 123, 
+        timestamp: new Date().toISOString() 
+    },
+];
 
 export const getArtists = (): Promise<Artist[]> => {
     return new Promise((resolve) => setTimeout(() => resolve(artists), 500));
@@ -356,6 +627,14 @@ export const getPostsForArtist = (artistId: string): Promise<Post[]> => {
     return new Promise((resolve) => setTimeout(() => resolve(posts.filter(p => p.artistId === artistId)), 500));
 }
 
+export const getMuralPosts = (artistId: string): Promise<MuralPost[]> => {
+    return new Promise((resolve) => setTimeout(() => resolve(muralPosts.filter(p => p.artistId === artistId)), 500));
+}
+
+export const getFanArtPosts = (artistId: string): Promise<FanArtPost[]> => {
+    return new Promise((resolve) => setTimeout(() => resolve(fanArtPosts.filter(p => p.artistId === artistId)), 500));
+}
+
 export const getMerchForArtist = (artistId: string): Promise<MerchItem[]> => {
     return new Promise((resolve) => setTimeout(() => resolve(merch.filter(m => m.artistId === artistId)), 500));
 }
@@ -366,6 +645,18 @@ export const getEventsForArtist = (artistId: string): Promise<Event[]> => {
 
 export const getAuctionsForArtist = (artistId: string): Promise<AuctionItem[]> => {
     return new Promise((resolve) => setTimeout(() => resolve(auctions.filter(a => a.artistId === artistId)), 500));
+}
+
+export const getExperiencesForArtist = (artistId: string): Promise<ExperienceItem[]> => {
+    return new Promise((resolve) => setTimeout(() => resolve(experiences.filter(e => e.artistId === artistId)), 500));
+}
+
+export const getFanGroupsForArtist = (artistId: string): Promise<FanGroup[]> => {
+    return new Promise((resolve) => setTimeout(() => resolve(fanGroups.filter(fg => fg.artistId === artistId)), 500));
+}
+
+export const getVaquinhaCampaignsForArtist = (artistId: string): Promise<VaquinhaCampaign[]> => {
+    return new Promise((resolve) => setTimeout(() => resolve(vaquinhaCampaigns.filter(v => v.artistId === artistId)), 500));
 }
 
 export const getExclusiveRewardsForArtist = (artistId: string): Promise<ExclusiveReward[]> => {

@@ -1,8 +1,12 @@
-
-import React from 'react';
+import '@fontsource/plus-jakarta-sans/400.css';
+import '@fontsource/plus-jakarta-sans/500.css';
+import '@fontsource/plus-jakarta-sans/700.css';
+import '@fontsource/plus-jakarta-sans/800.css';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
+import PwaPrompts from './components/PwaPrompts';
+import './styles/globals.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -11,9 +15,10 @@ if (!rootElement) {
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
-  <React.StrictMode>
-    <ErrorBoundary>
+  <ErrorBoundary>
+    <>
       <App />
-    </ErrorBoundary>
-  </React.StrictMode>
+      <PwaPrompts />
+    </>
+  </ErrorBoundary>
 );

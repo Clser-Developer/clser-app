@@ -1,71 +1,63 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { AuctionItem } from '../types';
 import Icon from './Icon';
+import { Button } from './ui/button';
+import { ModalBody, ModalCloseButton, ModalFooter, ModalHeader, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface AuctionBidModalProps {
   item: AuctionItem;
   onClose: () => void;
-  onConfirmBid: (auctionId: string) => void;
+  onConfirmBid: (auctionItem: AuctionItem) => void;
 }
 
-const LoadingSpinner: React.FC = () => (
-    <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-);
-
 const AuctionBidModal: React.FC<AuctionBidModalProps> = ({ item, onClose, onConfirmBid }) => {
-    const [isProcessing, setIsProcessing] = useState(false);
-
     const nextBidAmount = item.currentBid + item.bidIncrement;
-
-    const handleConfirm = () => {
-        setIsProcessing(true);
-        // Simulate network delay
-        setTimeout(() => {
-            onConfirmBid(item.id);
-            // The modal will be closed by the parent component
-        }, 1500);
-    };
+    const handleConfirm = () => onConfirmBid(item);
 
     return (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" aria-modal="true" role="dialog">
-            <div className="bg-gray-800 rounded-t-2xl w-full max-w-md shadow-2xl border-t border-gray-700 animate-slide-up">
-                <header className="p-4 border-b border-gray-700 flex justify-between items-center">
-                    <h2 className="text-lg font-bold text-white">Confirmar Lance</h2>
-                    <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-700" disabled={isProcessing}>
-                        <Icon name="close" className="w-6 h-6" />
-                    </button>
-                </header>
-                <div className="p-6">
-                    <div className="flex items-start space-x-4 mb-6">
-                        <img src={item.imageUrl} alt={item.name} className="w-24 h-24 rounded-lg object-cover flex-shrink-0" />
+        <ModalShell open={true} onClose={onClose} variant="sheet" closeOnOverlayClick>
+                <ModalHeader>
+                    <ModalTitle className="ml-1">Confirmar Lance</ModalTitle>
+                    <ModalCloseButton onClick={onClose} />
+                </ModalHeader>
+                <ModalBody className="space-y-8">
+                    <div className="flex items-center space-x-5">
+                        <img src={item.imageUrl} alt={item.name} className="w-24 h-24 rounded-2xl object-cover flex-shrink-0 border border-gray-100 shadow-sm" />
                         <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-white">{item.name}</p>
-                            <p className="text-sm text-gray-400 mt-1">Lance atual: <span className="font-bold text-white">R$ {item.currentBid.toFixed(2).replace('.', ',')}</span></p>
+                            <p className="font-black text-gray-900 text-lg leading-tight line-clamp-2">{item.name}</p>
+                            <div className="flex items-center gap-1.5 mt-1.5">
+                                <span className="text-xs font-bold text-gray-400 uppercase">Lance atual:</span>
+                                <span className="text-sm font-black text-rose-500">R$ {item.currentBid.toFixed(2).replace('.', ',')}</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="bg-gray-900/50 rounded-lg p-4 text-center">
-                        <p className="text-sm text-gray-300">Seu lance será de:</p>
-                        <p className="text-4xl font-black text-orange-400 my-2">R$ {nextBidAmount.toFixed(2).replace('.', ',')}</p>
-                        <p className="text-xs text-gray-500">(Lance mínimo: + R$ {item.bidIncrement.toFixed(2).replace('.', ',')})</p>
+                    <div className="bg-gray-50 border border-gray-100 rounded-3xl p-8 text-center shadow-inner">
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Seu lance será de:</p>
+                        <p className="text-5xl font-black text-gray-900 my-3 tabular-nums">R$ {nextBidAmount.toFixed(2).replace('.', ',')}</p>
+                        <div className="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase tracking-widest">
+                            <Icon name="plus" className="w-3 h-3 mr-1" />
+                            R$ {item.bidIncrement.toFixed(2).replace('.', ',')} mínimo
+                        </div>
                     </div>
 
-                    <p className="text-xs text-gray-500 text-center mt-6">
-                        Ao confirmar, você se compromete com este lance se for o vencedor ao final do leilão.
-                    </p>
-                </div>
-                <div className="p-4 bg-gray-900/50">
-                    <button
+                    <div className="flex items-start space-x-3 bg-rose-50 p-4 rounded-2xl border border-rose-100">
+                        <Icon name="lock-closed" className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-rose-700 font-medium leading-relaxed">
+                            Ao confirmar, você se compromete com este lance se for o vencedor ao final do leilão. O valor só será debitado caso você ganhe.
+                        </p>
+                    </div>
+                </ModalBody>
+                <ModalFooter className="bg-gray-50/50 safe-bottom-pad">
+                    <Button
                         onClick={handleConfirm}
-                        disabled={isProcessing}
-                        className="w-full bg-orange-500 text-white font-bold py-4 px-4 rounded-lg hover:bg-orange-600 transition-transform hover:scale-105 transform-gpu disabled:bg-orange-700 disabled:cursor-not-allowed disabled:scale-100 flex justify-center items-center focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full rounded-2xl py-6 text-sm font-black"
                     >
-                        {isProcessing ? <LoadingSpinner /> : 'Confirmar Lance'}
-                    </button>
-                </div>
-            </div>
-        </div>
+                        Confirmar e Continuar
+                    </Button>
+                </ModalFooter>
+        </ModalShell>
     );
 };
 

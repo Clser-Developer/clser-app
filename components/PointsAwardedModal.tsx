@@ -1,5 +1,7 @@
 
 import React from 'react';
+import { Button } from './ui/button';
+import { ModalBody, ModalFooter, ModalShell, ModalTitle } from './ui/modal-shell';
 
 interface PointsAwardedModalProps {
   isVisible: boolean;
@@ -17,29 +19,30 @@ const PointsAwardedModal: React.FC<PointsAwardedModalProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" aria-modal="true" role="dialog">
-      <div className="bg-gray-800 rounded-2xl w-full max-w-sm text-center p-8 shadow-2xl border border-gray-700 animate-scale-in-bounce flex flex-col items-center">
-        <div className="w-20 h-20 bg-orange-500/20 rounded-full flex items-center justify-center mb-6 border-4 border-orange-500/30">
+    <ModalShell open={isVisible} onClose={onClose} variant="dialog" className="max-w-[22rem] text-center">
+      <ModalBody className="flex flex-col items-center px-6 pb-4 pt-6">
+        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border-4 border-rose-100 bg-rose-50 shadow-inner">
             <span className="text-4xl animate-pulse">✨</span>
         </div>
         
-        <h2 className="text-2xl font-bold text-white mb-2">Você ganhou pontos!</h2>
-        <p className="text-gray-300 mb-6 text-sm">{reason}</p>
+        <ModalTitle className="mb-1 text-[1.75rem] leading-none">Você ganhou pontos!</ModalTitle>
+        <p className="mb-5 text-sm font-medium leading-relaxed text-gray-500">{reason}</p>
         
-        <div className="bg-gray-700/50 rounded-lg p-3 w-full mb-8">
-            <p className="text-3xl font-bold text-orange-400">+{points} Fan Points</p>
+        <div className="mb-5 w-full rounded-[1.5rem] border border-gray-100 bg-gray-50 px-5 py-4 shadow-inner">
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.22em] text-gray-400">Fan Points Acumulados</p>
+            <p className="text-[2.25rem] font-black leading-none text-rose-500">+{points}</p>
         </div>
-        
-        <div className="w-full space-y-3">
-             <button
-                onClick={onClose}
-                className="w-full bg-orange-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-orange-600 transition-transform hover:scale-105 transform-gpu"
-            >
-                Continuar
-            </button>
-        </div>
-      </div>
-    </div>
+
+      </ModalBody>
+      <ModalFooter className="border-t-0 bg-background px-6 pb-6 pt-0">
+        <Button
+            onClick={onClose}
+            className="h-12 w-full rounded-2xl text-sm font-black"
+        >
+            Incrível!
+        </Button>
+      </ModalFooter>
+    </ModalShell>
   );
 };
 

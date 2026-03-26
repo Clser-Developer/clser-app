@@ -1,17 +1,15 @@
+
 import React, { useState, useMemo } from 'react';
 import Icon from './Icon';
 import { helpContent, allFaqs } from '../services/helpContent';
 import type { FAQ } from '../types';
 
-// --- Sub-componentes para melhor estrutura e resiliência ---
-
-// Componente Highlight (já robusto, mantido)
 const escapeRegExp = (string: string): string => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
 
 const Highlight: React.FC<{ text: unknown; highlight: string }> = ({ text, highlight }) => {
-  const safeText = typeof text === 'string' ? text : String(text ?? ''); // Ainda mais robusto
+  const safeText = typeof text === 'string' ? text : String(text ?? '');
   const trimmedHighlight = highlight.trim();
   if (!trimmedHighlight) return <span>{safeText}</span>;
 
@@ -23,7 +21,7 @@ const Highlight: React.FC<{ text: unknown; highlight: string }> = ({ text, highl
       <span>
         {parts.map((part, i) =>
           part.toLowerCase() === trimmedHighlight.toLowerCase() ? (
-            <mark key={i} className="bg-orange-500/50 text-white rounded-sm px-0.5 py-0">
+            <mark key={i} className="bg-rose-100 text-rose-700 rounded-sm px-0.5 py-0">
               {part}
             </mark>
           ) : (
@@ -33,12 +31,10 @@ const Highlight: React.FC<{ text: unknown; highlight: string }> = ({ text, highl
       </span>
     );
   } catch (error) {
-    console.error('Error in Highlight component regex:', error);
-    return <span>{safeText}</span>; // Fallback em caso de erro de regex
+    return <span>{safeText}</span>;
   }
 };
 
-// Extrator de ID de Vídeo do YouTube (já robusto, mantido)
 const getYouTubeVideoId = (url: unknown): string | null => {
   if (typeof url !== 'string' || !url) return null;
   try {
@@ -47,50 +43,50 @@ const getYouTubeVideoId = (url: unknown): string | null => {
     if (urlObj.hostname.includes('youtu.be')) return urlObj.pathname.slice(1);
     return null;
   } catch (error) {
-    return null; // Não registrar erros esperados como URLs inválidas
+    return null;
   }
 };
 
-// Item de Acordeão (para FAQs)
 const AccordionItem: React.FC<{
   faq: FAQ;
   isOpen: boolean;
   onClick: () => void;
 }> = ({ faq, isOpen, onClick }) => (
-  <div className="border-b border-gray-700 last:border-b-0">
+  <div className="border-b border-gray-100 last:border-b-0">
     <button
       onClick={onClick}
       className="w-full flex justify-between items-center text-left p-4 focus:outline-none"
       aria-expanded={isOpen}
     >
-      <span className="font-semibold text-white">{faq.question ?? 'Pergunta indisponível'}</span>
+      <span className="font-bold text-gray-900 text-sm">{faq.question}</span>
       <Icon name="chevron-down" className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isOpen ? 'transform rotate-180' : ''}`} />
     </button>
     <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96' : 'max-h-0'}`}>
-      <div className="p-4 pt-0 text-gray-300">
-        <p>{faq.answer ?? 'Resposta indisponível'}</p>
+      <div className="p-4 pt-0 text-gray-500 text-sm font-medium leading-relaxed">
+        <p>{faq.answer}</p>
       </div>
     </div>
   </div>
 );
 
-// Seção para o Vídeo Tutorial
 const VideoTutorial: React.FC<{ title: string; videoUrl: string }> = ({ title, videoUrl }) => {
   const videoId = getYouTubeVideoId(videoUrl);
-  if (!videoId) return null; // Falha silenciosamente se não encontrar vídeo válido
+  if (!videoId) return null;
 
   return (
     <div>
-      <h3 className="text-md font-bold text-white mb-2">{title}</h3>
+      <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 px-1">{title}</h3>
       <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="block group">
-        <div className="relative rounded-lg overflow-hidden aspect-video bg-gray-900 flex items-center justify-center p-8">
+        <div className="relative rounded-2xl overflow-hidden aspect-video bg-gray-100 flex items-center justify-center border border-gray-200 shadow-inner">
             <img 
-                src="https://i.ibb.co/gMQ8gKsd/logo-superfans.png" 
-                alt="Superfans Logo"
-                className="h-12 w-auto opacity-80 group-hover:opacity-100 transition-opacity" 
+                src="https://i.ibb.co/fzC9nphW/clser-logo-color.png" 
+                alt="Clser Tutorial"
+                className="h-10 w-auto opacity-30 grayscale group-hover:opacity-60 transition-opacity" 
             />
-            <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Icon name="media" className="w-12 h-12 text-white/80" />
+            <div className="absolute inset-0 flex items-center justify-center">
+                <div className="bg-white p-4 rounded-full shadow-xl group-hover:scale-110 transition-transform">
+                    <Icon name="play" className="w-8 h-8 text-rose-500 fill-current" />
+                </div>
             </div>
         </div>
       </a>
@@ -98,28 +94,21 @@ const VideoTutorial: React.FC<{ title: string; videoUrl: string }> = ({ title, v
   );
 };
 
-// Seção para FAQs contextuais
 const FaqSection: React.FC<{ title: string; faqs: FAQ[] }> = ({ title, faqs }) => {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
-  if (!Array.isArray(faqs) || faqs.length === 0) {
-    return null; // Não renderiza se 'faqs' não for um array válido
-  }
-  
-  const toggleFaq = (index: number) => {
-    setOpenFaqIndex(openFaqIndex === index ? null : index);
-  };
+  if (!Array.isArray(faqs) || faqs.length === 0) return null;
   
   return (
     <div>
-      <h3 className="text-md font-bold text-white mb-2">{title}</h3>
-      <div className="bg-gray-900/50 rounded-lg border border-gray-700">
+      <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 px-1">{title}</h3>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
         {faqs.map((faq, index) => (
           <AccordionItem
             key={index}
             faq={faq}
             isOpen={openFaqIndex === index}
-            onClick={() => toggleFaq(index)}
+            onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
           />
         ))}
       </div>
@@ -127,81 +116,6 @@ const FaqSection: React.FC<{ title: string; faqs: FAQ[] }> = ({ title, faqs }) =
   );
 };
 
-// Seção para Resultados de Busca
-const SearchResults: React.FC<{ query: string }> = ({ query }) => {
-  const filteredFaqs = useMemo(() => {
-    if (!query.trim()) return [];
-    const lowercasedQuery = query.toLowerCase();
-    return allFaqs.filter(
-      faq =>
-        (faq.question && faq.question.toLowerCase().includes(lowercasedQuery)) ||
-        (faq.answer && faq.answer.toLowerCase().includes(lowercasedQuery))
-    );
-  }, [query]);
-
-  if (filteredFaqs.length === 0) {
-    return (
-      <div className="text-center p-8 bg-gray-900/50 rounded-lg border border-gray-700">
-        <p className="font-semibold text-white">Nenhum resultado encontrado</p>
-        <p className="text-sm text-gray-400 mt-1">Tente usar outros termos na sua busca.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-700 divide-y divide-gray-700">
-      {filteredFaqs.map((faq, index) => (
-        <div key={index} className="p-4">
-          <span className="text-[10px] font-bold text-orange-400 uppercase bg-orange-500/10 px-2 py-0.5 rounded-full">
-            {faq.category}
-          </span>
-          <p className="font-semibold text-white mt-2">
-            <Highlight text={faq.question} highlight={query} />
-          </p>
-          <p className="text-sm text-gray-300 mt-1">
-            <Highlight text={faq.answer} highlight={query} />
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// Seção para Ajuda Geral (fallback)
-const GeneralHelp: React.FC = () => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const generalHelp = helpContent.geral;
-  
-  if (!generalHelp || !Array.isArray(generalHelp.faqs)) return null;
-
-  const initialFaqs = generalHelp.faqs.slice(0, 2);
-  const faqsToShow = isExpanded ? generalHelp.faqs : initialFaqs;
-  
-  return (
-    <div>
-      <h3 className="text-md font-bold text-white mb-2">Dúvidas Gerais</h3>
-      <div className="bg-gray-900/50 rounded-lg border border-gray-700 divide-y divide-gray-700">
-        {faqsToShow.map((faq, index) => (
-          <div key={index} className="p-4">
-            <p className="font-semibold text-white">{faq.question}</p>
-            <p className="text-sm text-gray-300 mt-1">{faq.answer}</p>
-          </div>
-        ))}
-      </div>
-      {generalHelp.faqs.length > initialFaqs.length && (
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full mt-3 text-center p-2 bg-gray-700 text-orange-400 font-semibold rounded-lg hover:bg-gray-600 transition-colors"
-        >
-          {isExpanded ? 'Ver menos' : 'Ver mais'}
-        </button>
-      )}
-    </div>
-  );
-};
-
-
-// --- Componente Principal do Modal ---
 const HelpCenterModal: React.FC<{
   isVisible: boolean;
   onClose: () => void;
@@ -211,35 +125,31 @@ const HelpCenterModal: React.FC<{
   
   if (!isVisible) return null;
 
-  // Obtém o tópico atual de forma segura, com um fallback garantido.
   const topic = helpContent[context] ?? helpContent.geral;
   const isSearching = searchQuery.trim().length > 0;
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center animate-fade-in"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center animate-fade-in"
       onClick={onClose}
       aria-modal="true"
       role="dialog"
     >
       <div
-        className="bg-gray-800 rounded-t-2xl w-full max-w-lg shadow-2xl border-t border-gray-700 animate-slide-up flex flex-col max-h-[90vh]"
+        className="bg-gray-50 rounded-t-[2.5rem] w-full max-w-lg shadow-2xl border-t border-gray-100 animate-slide-up flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Cabeçalho */}
-        <header className="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
+        <header className="p-5 border-b border-gray-100 flex justify-between items-center flex-shrink-0 bg-white rounded-t-[2.5rem]">
           <div className="flex items-center space-x-3">
-            <Icon name="question-mark-circle" className="w-6 h-6 text-orange-400" />
-            <h2 className="text-lg font-bold text-white">Central de Ajuda</h2>
+            <Icon name="question-mark-circle" className="w-6 h-6 text-rose-500" />
+            <h2 className="text-xl font-black text-gray-900">Central de Ajuda</h2>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-700">
+          <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
             <Icon name="close" className="w-6 h-6" />
           </button>
         </header>
 
-        {/* Conteúdo Rolável */}
-        <div className="p-6 overflow-y-auto space-y-6">
-          {/* Barra de Busca sempre visível */}
+        <div className="p-6 overflow-y-auto space-y-8 no-scrollbar">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Icon name="search" className="w-5 h-5 text-gray-400" />
@@ -248,23 +158,34 @@ const HelpCenterModal: React.FC<{
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar em toda a Central de Ajuda..."
-              className="w-full bg-gray-700 border border-gray-600 rounded-full py-3 pl-12 pr-4 text-white placeholder-gray-400 focus:ring-2 focus:ring-magenta-500 focus:border-transparent outline-none transition"
+              placeholder="Como podemos ajudar?"
+              className="w-full bg-white border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition shadow-sm"
             />
           </div>
 
-          {isSearching ? (
-            <SearchResults query={searchQuery} />
-          ) : (
+          {!isSearching ? (
             <>
               <VideoTutorial title={topic.title} videoUrl={topic.videoTutorialUrl} />
-              <FaqSection title="Dúvidas Frequentes da Página" faqs={topic.faqs} />
-              <GeneralHelp />
+              <FaqSection title="Dúvidas Frequentes" faqs={topic.faqs} />
             </>
+          ) : (
+             <div className="space-y-4">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Resultados da busca</h3>
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
+                    {allFaqs.filter(f => f.question.toLowerCase().includes(searchQuery.toLowerCase())).map((faq, i) => (
+                        <div key={i} className="p-4">
+                            <span className="text-[9px] font-black text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded-md uppercase mb-2 inline-block">{faq.category}</span>
+                            <p className="font-bold text-gray-900 text-sm"><Highlight text={faq.question} highlight={searchQuery} /></p>
+                            <p className="text-gray-500 text-xs mt-1 font-medium"><Highlight text={faq.answer} highlight={searchQuery} /></p>
+                        </div>
+                    ))}
+                </div>
+             </div>
           )}
 
-          <footer className="text-center pt-4 border-t border-gray-700/50">
-            <p className="text-sm text-gray-500">Não encontrou o que procurava? Tente buscar acima.</p>
+          <footer className="text-center pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Suporte Direto</p>
+            <p className="text-sm text-gray-600 mt-1 font-medium">ajuda@clser.app</p>
           </footer>
         </div>
       </div>

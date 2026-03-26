@@ -1,54 +1,36 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { type ErrorInfo, type ReactNode } from 'react';
 
-interface Props {
+interface ErrorBoundaryProps {
   children: ReactNode;
 }
 
-interface State {
+interface ErrorBoundaryState {
   hasError: boolean;
-  error?: Error;
 }
 
-class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false
-  };
-
-  public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
   }
 
-  public render() {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Unhandled app error', error, errorInfo);
+  }
+
+  render() {
     if (this.state.hasError) {
       return (
-        <div className="w-full h-full flex flex-col justify-center items-center bg-gray-900 text-white p-8">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-red-500 mb-4">
-              Oops! Algo deu errado
-            </h2>
-            <p className="text-gray-300 mb-6">
-              Desculpe pelo inconveniente. Ocorreu um erro inesperado.
+        <div className="safe-screen flex items-center justify-center bg-gray-100 p-6 text-center">
+          <div className="max-w-sm rounded-3xl bg-white p-8 shadow-xl">
+            <h1 className="text-2xl font-black text-gray-900">Algo deu errado</h1>
+            <p className="mt-3 text-sm text-gray-500">
+              O aplicativo encontrou um erro inesperado. Recarregue a pagina para tentar novamente.
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
-            >
-              Recarregar página
-            </button>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mt-6 text-left">
-                <summary className="cursor-pointer text-gray-400 hover:text-gray-200">
-                  Detalhes do erro (desenvolvimento)
-                </summary>
-                <pre className="mt-2 p-4 bg-gray-800 rounded text-sm text-red-300 overflow-auto">
-                  {this.state.error.stack}
-                </pre>
-              </details>
-            )}
           </div>
         </div>
       );
