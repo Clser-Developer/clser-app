@@ -43,5 +43,6 @@
 - Safe-area CSS and fixed bottom-nav spacing are active (`styles/globals.css`).
 - Scroll-to-top behavior on section switches is active.
 - Core regression checks (`npm test`, `tsc`, `build`) are passing.
+- Automated smoke matrix (`guest-entry`, `invalid-login`, `auth-shell`) passed in all listed viewports/orientations.
+- Latest report: [mobile-qa-report-2026-03-26.md](/Users/andremarangon/Documents/_Projetos%20Nocode/app-clser-bkp%20(antigo)/docs/mobile-qa-report-2026-03-26.md)
 - Manual device-by-device sign-off remains required before production release.
-

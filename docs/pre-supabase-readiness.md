@@ -14,6 +14,8 @@ Status: **in progress**
 
 - Matrix/checklist documented in [mobile-qa-matrix.md](/Users/andremarangon/Documents/_Projetos%20Nocode/app_clser/docs/mobile-qa-matrix.md).
 - Automated regression (`test`/`tsc`/`build`) green.
+- Automated smoke QA across full viewport/orientation matrix passed:
+  - report: [mobile-qa-report-2026-03-26.md](/Users/andremarangon/Documents/_Projetos%20Nocode/app-clser-bkp%20(antigo)/docs/mobile-qa-report-2026-03-26.md)
 - Manual viewport/device sign-off still required.
 
 ## Phase 2 - Frontend pre-backend refactor
@@ -37,6 +39,21 @@ Status: **partially done**
   - commerce and checkout handlers moved to `hooks/useArtistCommerceHandlers.ts`.
 - Fan entry flow extraction started in `App.tsx`:
   - gateway/login/browse/session state transitions moved to `hooks/useFanFlowState.ts`.
+- Artist membership orchestration extracted from `App.tsx`:
+  - loading/ensuring memberships and artist subscription derivations moved to `hooks/useArtistMemberships.ts`.
+- Fan entry/session view routing decomposed from `App.tsx`:
+  - stage screens moved to `components/fan/FanStageRouter.tsx`.
+  - selected-artist access surface moved to `components/fan/SelectedArtistAccess.tsx`.
+  - authenticated fan session shell moved to `components/fan/FanSessionView.tsx` (preserving lazy `ArtistPage` chunking).
+  - account error dialog moved to `components/AppErrorModal.tsx`.
+- Artist navigation orchestration extracted from `components/ArtistPage.tsx`:
+  - section/subsection routing and reset behavior moved to `hooks/useArtistNavigation.ts`.
+- Artist data loading extracted from `components/ArtistPage.tsx`:
+  - feed/store/media/profile/comments loaders moved to `hooks/useArtistDataLoading.ts`.
+- Artist modal/overlay surface extracted from `components/ArtistPage.tsx`:
+  - checkout, feedback, media and support modals moved to `components/artist/ArtistPageOverlays.tsx`.
+- Artist section rendering extracted from `components/ArtistPage.tsx`:
+  - timeline/media/store/fan/profile view composition moved to `components/artist/ArtistPageSections.tsx`.
 
 Remaining:
 

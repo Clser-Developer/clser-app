@@ -1,32 +1,26 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { Artist, ArtistMembership, UserAddress, UserPhone, UserDemographics } from './types';
+import { Artist, UserAddress, UserPhone, UserDemographics } from './types';
 import { useGlobalUserState } from './hooks/useGlobalUserState';
 import { BillingProvider, useBilling } from './contexts/BillingContext';
 import { ArtistSessionProvider, useArtistSession } from './contexts/ArtistSessionContext';
 import { getArtistDataRepository } from './services/artistDataRepository';
-import { getMembershipRepository } from './services/membershipRepository';
 import { loginFanAccount, registerFanAccount } from './services/authService';
 import { executeQueuedMutationSync } from './services/offlineMutationSync';
 import { setQueuedMutationExecutor } from './lib/offline/mutation-queue';
 import { useFanFlowState } from './hooks/useFanFlowState';
-import ArtistShowcase from './components/ArtistShowcase';
-import ArtistSwitcher from './components/ArtistSwitcher';
-import PointsAwardedModal from './components/PointsAwardedModal';
+import { useArtistMemberships } from './hooks/useArtistMemberships';
+import AppErrorModal from './components/AppErrorModal';
 import ImageViewerModal from './components/ImageViewerModal';
 import DemoSelectionScreen from './components/DemoSelectionScreen';
-import FanAccessScreen from './components/FanAccessScreen';
-import FanLoginScreen from './components/FanLoginScreen';
-import Icon from './components/Icon';
 import SplashScreen from './components/SplashScreen';
 import ResumeOnboardingScreen from './components/ResumeOnboardingScreen';
-import { Button } from './components/ui/button';
-import { ModalBody, ModalFooter, ModalShell, ModalTitle } from './components/ui/modal-shell';
+import FanStageRouter from './components/fan/FanStageRouter';
+import FanSessionView from './components/fan/FanSessionView';
+import SelectedArtistAccess from './components/fan/SelectedArtistAccess';
 
-const ArtistLandingPage = lazy(() => import('./components/ArtistLandingPage'));
 const ArtistPage = lazy(() => import('./components/ArtistPage'));
 const Onboarding = lazy(() => import('./components/Onboarding'));
 const ArtistApp = lazy(() => import('./components/artist/ArtistApp'));
-const PaymentSetupScreen = lazy(() => import('./components/PaymentSetupScreen'));
 
 interface ImageViewerDetails {
   url: string;
@@ -69,7 +63,6 @@ const toUserDemographics = (value: { birthDate: string; city: string; gender: st
 
 const AppContent = () => {
   const [allArtists, setAllArtists] = useState<Artist[]>([]);
-  const [artistMemberships, setArtistMemberships] = useState<ArtistMembership[]>([]);
   const [showPaymentSetup, setShowPaymentSetup] = useState(false);
   const [pointsModalData, setPointsModalData] = useState<{ points: number; reason: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -134,7 +127,16 @@ const AppContent = () => {
     setStorageScope,
   } = useBilling();
   const artistDataRepository = useMemo(() => getArtistDataRepository(), []);
-  const membershipRepository = useMemo(() => getMembershipRepository(), []);
+  const {
+    artistsForShowcase,
+    ensureArtistMembership,
+    hasArtistMembership,
+    reloadMemberships,
+    subscribedArtists,
+  } = useArtistMemberships({
+    allArtists,
+    internalUserId,
+  });
 
   useEffect(() => {
     const fetchArtists = async () => {
@@ -177,44 +179,6 @@ const AppContent = () => {
     isBootSplashVisible,
     showPaymentSetup,
   ]);
-
-  useEffect(() => {
-    let isMounted = true;
-    const loadMemberships = async () => {
-      try {
-        const memberships = await membershipRepository.listByUser(internalUserId);
-        if (isMounted) {
-          setArtistMemberships(memberships);
-        }
-      } catch (error) {
-        console.error('Failed to load artist memberships', error);
-      }
-    };
-    void loadMemberships();
-    return () => {
-      isMounted = false;
-    };
-  }, [internalUserId, membershipRepository]);
-
-  const subscribedArtists = useMemo(
-    () =>
-      artistMemberships
-        .map((membership) => allArtists.find((artist) => artist.id === membership.artistId))
-        .filter((artist): artist is Artist => Boolean(artist)),
-    [allArtists, artistMemberships]
-  );
-
-  const hasArtistMembership = (artistId: string) =>
-    artistMemberships.some((membership) => membership.artistId === artistId);
-
-  const ensureArtistMembership = async (artistId: string, userId: string = internalUserId) => {
-    try {
-      const memberships = await membershipRepository.ensureMembership(userId, artistId);
-      setArtistMemberships(memberships);
-    } catch (error) {
-      console.error('Failed to ensure artist membership', error);
-    }
-  };
 
   const handleOnboardingComplete = async (details: {
       email: string, 
@@ -331,10 +295,6 @@ const AppContent = () => {
       null,
     [allArtists, subscribedArtists, currentArtistId]
   );
-  const artistsForShowcase = useMemo(
-    () => allArtists.filter((artist) => !artistMemberships.some((membership) => membership.artistId === artist.id)),
-    [allArtists, artistMemberships]
-  );
 
   const enterFanApp = () => {
       setAppMode('fan');
@@ -378,22 +338,14 @@ const AppContent = () => {
       setIsFanAuthenticated(true);
       clearOnboardingDraft();
 
-      let memberships = artistMemberships;
-      try {
-          memberships = await membershipRepository.listByUser(profile.internalUserId);
-          setArtistMemberships(memberships);
-      } catch (error) {
-          console.error('Failed to load memberships after login', error);
-      }
+      let memberships = await reloadMemberships(profile.internalUserId);
 
       resetFanNavigation();
       if (selectedArtistForAccess) {
           const targetArtistId = selectedArtistForAccess.id;
           const hasMembership = memberships.some((membership) => membership.artistId === targetArtistId);
           if (!hasMembership) {
-            const ensuredMemberships = await membershipRepository.ensureMembership(profile.internalUserId, targetArtistId);
-            memberships = ensuredMemberships;
-            setArtistMemberships(ensuredMemberships);
+            memberships = await ensureArtistMembership(targetArtistId, profile.internalUserId);
           }
           setCurrentArtistId(targetArtistId);
           setSelectedArtistForAccess(null);
@@ -445,6 +397,17 @@ const AppContent = () => {
       setCurrentArtistId(artist.id);
       setSelectedArtistForAccess(null);
       setFanModeStage('session');
+  };
+
+  const handleBrowseBack = () => {
+      if (lastViewedArtistId) {
+        setCurrentArtistId(lastViewedArtistId);
+        setLastViewedArtistId(null);
+        setFanModeStage('session');
+        return;
+      }
+
+      setFanModeStage('gateway');
   };
 
   const handleOnboardingCancel = () => {
@@ -514,81 +477,70 @@ const AppContent = () => {
         );
     }
 
-    if (fanModeStage === 'gateway') {
+    if (fanModeStage === 'gateway' || fanModeStage === 'login' || fanModeStage === 'browse') {
       return (
-        <FanAccessScreen
-          onEnter={handleOpenLogin}
-          onRegister={handleStartRegistration}
-          onExploreArtists={handleExploreArtists}
-          onBack={handleLogout}
-        />
-      );
-    }
-
-    if (fanModeStage === 'login') {
-      return (
-        <FanLoginScreen
+        <FanStageRouter
+          fanModeStage={fanModeStage}
           defaultEmail={email}
-          onSubmit={handleEnterExistingAccount}
-          onBack={() => setFanModeStage('gateway')}
+          artistsForShowcase={artistsForShowcase}
+          onOpenLogin={handleOpenLogin}
+          onStartRegistration={handleStartRegistration}
+          onExploreArtists={handleExploreArtists}
+          onBackToSelection={handleLogout}
+          onLoginSubmit={handleEnterExistingAccount}
+          onLoginBack={() => setFanModeStage('gateway')}
+          onBrowseArtistSelect={handleBrowseArtistSelection}
+          onBrowseBack={handleBrowseBack}
         />
-      );
-    }
-
-    if (fanModeStage === 'browse') {
-      return (
-          <ArtistShowcase 
-              artists={artistsForShowcase} 
-              onSelectArtist={(artist) => {
-                void handleBrowseArtistSelection(artist);
-              }} 
-              onBack={lastViewedArtistId ? () => { setCurrentArtistId(lastViewedArtistId); setLastViewedArtistId(null); setFanModeStage('session'); } : () => setFanModeStage('gateway')} 
-          />
       );
     }
 
     if (currentArtist && fanModeStage === 'session') {
       return (
-        <div className="bg-gray-50 text-gray-900 h-full">
-          <ArtistPage 
-            artist={currentArtist} onViewImage={setImageViewerState} updateImageViewer={(u) => setImageViewerState(p => p ? {...p, ...u} : null)}
-            onLogout={handleLogout} userNickname={nickname}
-            userScopeId={internalUserId}
-            onNicknameChange={setNickname} userProfileImageUrl={profileImageUrl} onProfileImageChange={setProfileImageUrl}
-          />
-          <ArtistSwitcher
-            isVisible={isSwitcherVisible} onClose={() => setSwitcherVisible(false)} artists={subscribedArtists}
-            currentArtistId={currentArtistId!} onSelectArtist={(artistId) => { setFanModeStage('session'); setCurrentArtistId(artistId); }} onFindMoreArtists={() => { setLastViewedArtistId(currentArtistId); resetFanNavigation(); setCurrentArtistId(null); setSelectedArtistForAccess(null); setFanModeStage('browse'); }}
-            onViewImage={(url) => setImageViewerState({ url })}
-          />
-          {pointsModalData && <PointsAwardedModal isVisible={true} points={pointsModalData.points} reason={pointsModalData.reason} onClose={() => setPointsModalData(null)} />}
-        </div>
+        <FanSessionView
+          ArtistPageComponent={ArtistPage}
+          artist={currentArtist}
+          currentArtistId={currentArtistId!}
+          userScopeId={internalUserId}
+          userNickname={nickname}
+          userProfileImageUrl={profileImageUrl}
+          isSwitcherVisible={isSwitcherVisible}
+          subscribedArtists={subscribedArtists}
+          pointsModalData={pointsModalData}
+          onLogout={handleLogout}
+          onSetImageViewerState={setImageViewerState}
+          onNicknameChange={setNickname}
+          onProfileImageChange={setProfileImageUrl}
+          onCloseSwitcher={() => setSwitcherVisible(false)}
+          onSelectArtist={(artistId) => {
+            setFanModeStage('session');
+            setCurrentArtistId(artistId);
+          }}
+          onFindMoreArtists={() => {
+            setLastViewedArtistId(currentArtistId);
+            resetFanNavigation();
+            setCurrentArtistId(null);
+            setSelectedArtistForAccess(null);
+            setFanModeStage('browse');
+          }}
+          onClosePointsModal={() => setPointsModalData(null)}
+        />
       );
     }
 
     if (selectedArtistForAccess) {
-        if (showPaymentSetup && !isSwitcherVisible) {
-            return (
-              <PaymentSetupScreen
-                artistName={selectedArtistForAccess.name}
-                onSkip={() => {
-                  void finalizeAccess();
-                }}
-                onSaveCard={handlePaymentSetupSave}
-              />
-            );
-        }
-
-        return (
-            <ArtistLandingPage 
-                artist={selectedArtistForAccess} 
-                onBack={() => setSelectedArtistForAccess(null)} 
-                onSubscribe={() => {
-                  void handleJoinFree(selectedArtistForAccess);
-                }} 
-                onViewImage={(url) => setImageViewerState({ url })} 
-            />
-        );
+      return (
+        <SelectedArtistAccess
+          artist={selectedArtistForAccess}
+          showPaymentSetup={showPaymentSetup}
+          isSwitcherVisible={isSwitcherVisible}
+          onSkipPaymentSetup={finalizeAccess}
+          onSaveCard={handlePaymentSetupSave}
+          onBack={() => setSelectedArtistForAccess(null)}
+          onSubscribe={handleJoinFree}
+          onViewImage={(url) => setImageViewerState({ url })}
+        />
+      );
     }
 
     return <ScreenLoader />;
@@ -599,25 +551,7 @@ const AppContent = () => {
       <>
         {mainContent()}
         <ImageViewerModal details={imageViewerState} onClose={() => setImageViewerState(null)} />
-        <ModalShell
-          open={Boolean(appErrorMessage)}
-          onClose={() => setAppErrorMessage(null)}
-          variant="dialog"
-          className="max-w-sm"
-        >
-          <ModalBody className="px-6 pb-4 pt-6 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-rose-100 bg-rose-50 text-rose-500">
-              <Icon name="question-mark-circle" className="h-8 w-8" />
-            </div>
-            <ModalTitle className="mb-2 text-[1.7rem] leading-none">Cadastro não concluído</ModalTitle>
-            <p className="text-sm font-medium leading-relaxed text-muted-foreground">{appErrorMessage}</p>
-          </ModalBody>
-          <ModalFooter className="px-6 pb-6 pt-0">
-            <Button onClick={() => setAppErrorMessage(null)} className="h-12 w-full rounded-2xl text-sm font-black">
-              Entendi
-            </Button>
-          </ModalFooter>
-        </ModalShell>
+        <AppErrorModal message={appErrorMessage} onClose={() => setAppErrorMessage(null)} />
       </>
     </Suspense>
   );
